@@ -1,40 +1,40 @@
 const { Client, GatewayIntentBits } = require('discord.js');
 
-// Configuración del bot
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
-        GatewayIntentBits.GuildMembers // Esto permite leer quién tiene cada rol
+        GatewayIntentBits.GuildMembers 
     ] 
 });
 
-// --- AQUÍ PONES TUS IDS ---
-const SERVER_ID = '123456789012345678'; // ID del servidor (Guild)
-const ID_POLICIA = '111111111111111111';
-const ID_MEDICO  = '222222222222222222';
-const ID_BOMBERO = '333333333333333333';
-const TOKEN      = 'TU_TOKEN_AQUÍ';
-// --------------------------
+// --- TUS DATOS ---
+const TOKEN = "TU_TOKEN_AQUI";
+const SERVER_ID = "ID_DEL_SERVER";
+const ROLES_IDS = {
+    POLICIA: "ID_POLICIA",
+    MEDICO: "ID_MEDICO",
+    BOMBERO: "ID_BOMBERO"
+};
 
-client.once('ready', async () => {
-    console.log(`✅ Bot online como: ${client.user.tag}`);
-
-    // Acceder al servidor
-    const guild = client.guilds.cache.get(SERVER_ID);
+client.once('ready', () => {
+    console.log(`Bot en Discloud listo como ${client.user.tag}`);
     
-    if (!guild) {
-        return console.error("❌ Error: No se encontró el servidor. ¿El bot está dentro?");
+    const guild = client.guilds.cache.get(SERVER_ID);
+    if (guild) {
+        console.log(`Cacheando roles para el servidor: ${guild.name}`);
     }
+});
 
-    // Cachear/Obtener los roles
-    const rolPolicia = guild.roles.cache.get(ID_POLICIA);
-    const rolMedico  = guild.roles.cache.get(ID_MEDICO);
-    const rolBombero = guild.roles.cache.get(ID_BOMBERO);
+// Ejemplo de comando rápido para ver si lee bien los roles
+client.on('messageCreate', async (message) => {
+    if (message.content === '!status_roles') {
+        const guild = client.guilds.cache.get(SERVER_ID);
+        const rPoli = guild.roles.cache.get(ROLES_IDS.POLICIA);
+        const rMed = guild.roles.cache.get(ROLES_IDS.MEDICO);
+        const rBomb = guild.roles.cache.get(ROLES_IDS.BOMBERO);
 
-    console.log(`--- Estado de Roles en ${guild.name} ---`);
-    console.log(`👮 Policías: ${rolPolicia ? rolPolicia.members.size : 'No encontrado'}`);
-    console.log(`⚕️ Médicos: ${rolMedico ? rolMedico.members.size : 'No encontrado'}`);
-    console.log(`🚒 Bomberos: ${rolBombero ? rolBombero.members.size : 'No encontrado'}`);
+        message.reply(`Estado actual:\n👮 Policías: ${rPoli?.members.size}\n⚕️ Médicos: ${rMed?.members.size}\n泵 Bomberos: ${rBomb?.members.size}`);
+    }
 });
 
 client.login(TOKEN);
