@@ -1,22 +1,21 @@
 {
-  "version": 2,
   "functions": {
     "api/**/*.php": {
-      "runtime": "vercel-php@0.6.0"
+      "runtime": "vercel-php@0.7.1"
     }
   },
   "routes": [
     {
-      "src": "/api/upload",
-      "dest": "/api/upload.php"
+      "src": "/index.php",
+      "dest": "/api/index.php"
     },
     {
-      "src": "/(?<empresa>[^/]+)/(?<file>.*\\.php)$",
-      "dest": "/api/ejecutor.php?empresa=$empresa&file=$file"
+      "src": "/(.*)\\.php",
+      "dest": "/api/$1.php"
     },
     {
-      "src": "/(?<empresa>[^/]+)/(?<file>.*)",
-      "dest": "/api/static_proxy.php?empresa=$empresa&file=$file"
+      "src": "/(.*)\\.xlx",
+      "status": 404
     }
   ]
 }
