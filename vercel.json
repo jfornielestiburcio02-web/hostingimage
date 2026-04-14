@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "functions": {
+    "api/**/*.php": {
+      "runtime": "vercel-php@0.6.0"
+    }
+  },
+  "routes": [
+    {
+      "src": "/api/upload",
+      "dest": "/api/upload.php"
+    },
+    {
+      "src": "/(?<empresa>[^/]+)/(?<file>.*\\.php)$",
+      "dest": "/api/ejecutor.php?empresa=$empresa&file=$file"
+    },
+    {
+      "src": "/(?<empresa>[^/]+)/(?<file>.*)",
+      "dest": "/api/static_proxy.php?empresa=$empresa&file=$file"
+    }
+  ]
+}
