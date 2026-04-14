@@ -1,9 +1,0 @@
-{
-  "name": "mibotderoles",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "dependencies": {
-    "discord.js": "^14.14.1"
-  }
-}
