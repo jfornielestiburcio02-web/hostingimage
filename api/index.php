@@ -1,8 +1,8 @@
 <?php
-// Configuración de GitHub desde variables de entorno de Vercel
+// Configuración de GitHub
 $githubToken = getenv('CREA_IMAGEN_HTML');
-$repoOwner = "jfornielestiburcio02-web"; // Cambia esto
-$repoName = "hostingimage";      // Cambia esto
+$repoOwner = "jfornielestiburcio02-web"; 
+$repoName = "hostingimage";      
 
 $mensaje = "";
 $urlImagen = "";
@@ -12,15 +12,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['archivo'])) {
     $nombreOriginal = basename($archivo['name']);
     $extension = pathinfo($nombreOriginal, PATHINFO_EXTENSION);
     
-    // Generar nombre aleatorio para evitar duplicados
     $nombreAleatorio = bin2hex(random_bytes(8)) . "." . $extension;
-    
-    // Ruta solicitada: /imagenes/publicas/transicional/{aleatorio}
     $rutaGitHub = "imagenes/publicas/transicional/" . $nombreAleatorio;
-    
     $contenidoBase64 = base64_encode(file_get_contents($archivo['tmp_name']));
 
-    // Llamada a la API de GitHub para subir el archivo
     $urlApi = "https://api.github.com/repos/$repoOwner/$repoName/contents/$rutaGitHub";
     
     $payload = json_encode([
@@ -43,11 +38,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['archivo'])) {
     curl_close($ch);
 
     if ($httpCode == 201) {
-        // Asumiendo que el repo está vinculado a Vercel o GitHub Pages
-        $urlImagen = "https://$repoName.vercel.app/$rutaGitHub";
+        // Usamos raw.githubusercontent para que la imagen sea visible de inmediato
+        $urlImagen = "https://raw.githubusercontent.com/$repoOwner/$repoName/main/$rutaGitHub";
         $mensaje = "¡Copia el enlace para tener la imagen lista!";
     } else {
-        $mensaje = "Error al subir la imagen. Verifica el Token y el Repositorio.";
+        // DEPURACIÓN DETALLADA
+        $datosError = json_decode($response, true);
+        $detalle = isset($datosError['message']) ? $datosError['message'] : "Error desconocido";
+        
+        // Si el token llega vacío desde getenv
+        if (empty($githubToken)) {
+            $detalle = "LA VARIABLE 'CREA_IMAGEN_HTML' ESTÁ VACÍA EN VERCEL";
+        }
+
+        $mensaje = "<strong>ERROR HTTP " . $httpCode . "</strong>: " . $detalle;
     }
 }
 ?>
@@ -55,19 +59,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['archivo'])) {
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Hostimage</title>
-    <style>
-
-            body { font-family: Arial, Helvetica, sans-serif; margin: 0; padding: 0; background-color: #f9f9f9; }
-        #header { background-color: #ffffff; padding: 15px 30px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; }
-        .lang-switcher a { text-decoration: none; margin-right: 15px; vertical-align: middle; color: #333; font-size: 14px; }
-        .lang-switcher img { width: 20px; height: 15px; margin-right: 5px; border: 1px solid #ccc; vertical-align: middle; }
-        .empresa-link a { background-color: #000; color: #fff; padding: 8px 15px; text-decoration: none; border-radius: 4px; font-weight: bold; }
-        #main-content { text-align: center; margin-top: 100px; }
+    <title>Hostimage - Debug Mode</title>
+    <style type="text/css">
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f9f9f9; }
+        #header { background: #fff; padding: 15px 30px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; }
+        .lang-switcher a { text-decoration: none; margin-right: 15px; color: #333; font-size: 14px; }
+        .lang-switcher img { width: 20px; vertical-align: middle; border: 1px solid #ccc; }
+        .empresa-link a { background: #000; color: #fff; padding: 8px 15px; text-decoration: none; border-radius: 4px; font-weight: bold; }
+        #main-content { text-align: center; margin-top: 80px; }
         .drop-zone { border: 2px dashed #bbb; padding: 50px; width: 50%; margin: 0 auto; background: #fff; cursor: pointer; border-radius: 10px; }
-        .drop-zone:hover { border-color: #000; }
         .result-box { margin-top: 30px; padding: 20px; background: #e7f3ff; display: inline-block; border-radius: 5px; border: 1px solid #b6d4fe; }
-        input[type="text"] { width: 300px; padding: 5px; border: 1px solid #ccc; }
+        .error-box { margin-top: 30px; padding: 20px; background: #ffe7e7; display: inline-block; border-radius: 5px; border: 1px solid #feb6b6; color: #d00; }
+        input[type="text"] { width: 350px; padding: 8px; border: 1px solid #ccc; }
     </style>
 </head>
 <body>
@@ -87,7 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['archivo'])) {
         <h1>Sube tu imagen rápidamente</h1>
         <p>Arrastra o selecciona un archivo para comenzar</p>
 
-        <form action="index.php" method="post" enctype="multipart/form-data">
+        <form action="" method="post" enctype="multipart/form-data">
             <div class="drop-zone" onclick="document.getElementById('fileInput').click()">
                 <input type="file" name="archivo" id="fileInput" style="display:none;" onchange="this.form.submit()" />
                 <strong>Haz clic aquí o suelta tu imagen</strong>
@@ -98,10 +101,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['archivo'])) {
             <div class="result-box">
                 <strong><?php echo $mensaje; ?></strong><br /><br />
                 <input type="text" value="<?php echo $urlImagen; ?>" id="copyInput" readonly="readonly" />
-                <button onclick="copyLink()">Copiar</button>
+                <button onclick="copyLink()">Copiar Enlace</button>
             </div>
         <?php elseif ($mensaje != ""): ?>
-            <p style="color:red;"><?php echo $mensaje; ?></p>
+            <div class="error-box">
+                <?php echo $mensaje; ?>
+            </div>
         <?php endif; ?>
     </div>
 
@@ -110,9 +115,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['archivo'])) {
             var copyText = document.getElementById("copyInput");
             copyText.select();
             document.execCommand("copy");
-            alert("Enlace copiado: " + copyText.value);
+            alert("Enlace copiado con éxito");
         }
     </script>
-
 </body>
 </html>
