@@ -16,6 +16,10 @@
     {
       "src": "/(.*)\\.xlx",
       "status": 404
+    },
+    {
+      "src": "/imagenes/(.*)",
+      "dest": "https://raw.githubusercontent.com/jfornielestiburcio02-web/hostingimage/main/imagenes/$1"
     }
   ]
 }
