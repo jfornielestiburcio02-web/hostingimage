@@ -49,9 +49,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['archivo'])) {
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Hostimage - Pro</title>
-    <style type="text/css">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Hostimage - Pro</title>
+<style type="text/css">
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background: #f4f7f6; text-align: center; }
         #header { background: #fff; padding: 15px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; }
         .btn-empresa { background: #000; color: #fff; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; }
@@ -117,6 +117,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['archivo'])) {
             alert("Enlace copiado: " + copyText.value);
         }
     </script>
+
+
+
+
+
+
+
+    <xlx>
+usa firebase;
+        configuracion = ("https://firebaseapis.com")
+            lanzaString
+        metodo("Recoger")
+        valor=(estatuto)"
+    guarda;
+cierra uso;
+
+        <h1>(%estatuto%)</h1>
+    </xlx>
 
 </body>
 </html>
