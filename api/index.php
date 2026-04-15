@@ -48,9 +48,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['archivo'])) {
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
-<head>
+<HEAD>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<title>Hostimage - Pro</title>
+<title>Hostimage</title>
 <style type="text/css">
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background: #f4f7f6; text-align: center; }
         #header { background: #fff; padding: 15px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; }
@@ -67,32 +67,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['archivo'])) {
         .result-box { margin-top: 30px; background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: inline-block; }
         input[type="text"] { width: 300px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
     </style>
-</head>
-<body>
-
+</HEAD>
+<BODY>
     <div id="header">
-        <div>
-            <a href="/es/"><img src="https://flagcdn.com/es.svg" width="20" /></a>
-            <a href="/en/"><img src="https://flagcdn.com/gb.svg" width="20" /></a>
+    <div>
+ <a href="/es/"><img src="https://flagcdn.com/es.svg" width="20" /></a>
+<a href="/en/"><img src="https://flagcdn.com/gb.svg" width="20" /></a>
         </div>
         <a href="/sempresa/" class="btn-empresa">Solución para empresas</a>
     </div>
-
-    <div id="main">
-        <h1>Sube tu archivo</h1>
-        
+<div id="main">
+<h1>Sube tu archivo</h1>
         <form id="uploadForm" action="" method="post" enctype="multipart/form-data">
-            <div class="drop-zone" onclick="document.getElementById('fileInput').click()">
-                <input type="file" name="archivo" id="fileInput" style="display:none;" onchange="showLoading()" />
-                <strong>Haz clic para subir imagen</strong>
-            </div>
+     <div class="drop-zone" onclick="document.getElementById('fileInput').click()">
+      <input type="file" name="archivo" id="fileInput" style="display:none;" onchange="showLoading()" />
+     <strong>Haz clic para subir imagen</strong>
+  </div>
         </form>
-
-        <div id="loading">
-            <div class="spinner"></div>
-            <p>Esto tardará unos segundos, mientras espere...</p>
+ <div id="loading">
+  <div class="spinner"></div>
+  <p>Esto tardará unos segundos, mientras espere...</p>
         </div>
-
         <?php if ($urlImagen != ""): ?>
             <div class="result-box">
                 <p style="color: green; font-weight: bold;"><?php echo $mensaje; ?></p>
@@ -118,23 +113,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['archivo'])) {
         }
     </script>
 
-
-
-
-
-
-
-    <xlx>
-usa firebase;
-        configuracion = ("https://firebaseapis.com")
-            lanzaString
-        metodo("Recoger")
-        valor=(estatuto)"
-    guarda;
-cierra uso;
-
-        <h1>(%estatuto%)</h1>
-    </xlx>
-
-</body>
-</html>
+</BODY>
+</HTML>
