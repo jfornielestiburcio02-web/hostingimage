@@ -1,5 +1,4 @@
 <?php
-// Configuración de GitHub
 $githubToken = getenv('CREA_IMAGEN_HTML');
 $repoOwner = "jfornielestiburcio02-web"; 
 $repoName = "hostingimage";      
@@ -9,17 +8,15 @@ $urlImagen = "";
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['archivo'])) {
     $archivo = $_FILES['archivo'];
-    $nombreOriginal = basename($archivo['name']);
-    $extension = pathinfo($nombreOriginal, PATHINFO_EXTENSION);
+    $nombreAleatorio = bin2hex(random_bytes(8)) . "." . pathinfo($archivo['name'], PATHINFO_EXTENSION);
+    $rutaInterna = "publicas/transicional/" . $nombreAleatorio;
+    $rutaGitHub = "imagenes/" . $rutaInterna;
     
-    $nombreAleatorio = bin2hex(random_bytes(8)) . "." . $extension;
-    $rutaGitHub = "imagenes/publicas/transicional/" . $nombreAleatorio;
     $contenidoBase64 = base64_encode(file_get_contents($archivo['tmp_name']));
-
     $urlApi = "https://api.github.com/repos/$repoOwner/$repoName/contents/$rutaGitHub";
     
     $payload = json_encode([
-        "message" => "Upload public image: $nombreAleatorio",
+        "message" => "Upload: $nombreAleatorio",
         "content" => $contenidoBase64
     ]);
 
@@ -38,20 +35,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['archivo'])) {
     curl_close($ch);
 
     if ($httpCode == 201) {
-        // Usamos raw.githubusercontent para que la imagen sea visible de inmediato
-        $urlImagen = "https://raw.githubusercontent.com/$repoOwner/$repoName/main/$rutaGitHub";
-        $mensaje = "¡Copia el enlace para tener la imagen lista!";
+        // URL FINAL CON TU DOMINIO
+        $protocolo = isset($_SERVER['HTTPS']) ? 'https://' : 'http://';
+        $dominio = $_SERVER['HTTP_HOST'];
+        $urlImagen = $protocolo . $dominio . "/imagenes/" . $rutaInterna;
+        $mensaje = "¡Imagen lista en tu hosting!";
     } else {
-        // DEPURACIÓN DETALLADA
-        $datosError = json_decode($response, true);
-        $detalle = isset($datosError['message']) ? $datosError['message'] : "Error desconocido";
-        
-        // Si el token llega vacío desde getenv
-        if (empty($githubToken)) {
-            $detalle = "LA VARIABLE 'CREA_IMAGEN_HTML' ESTÁ VACÍA EN VERCEL";
-        }
-
-        $mensaje = "<strong>ERROR HTTP " . $httpCode . "</strong>: " . $detalle;
+        $error = json_decode($response, true);
+        $mensaje = "Error " . $httpCode . ": " . ($error['message'] ?? 'Fallo de red');
     }
 }
 ?>
@@ -59,64 +50,73 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['archivo'])) {
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Hostimage - Debug Mode</title>
+    <title>Hostimage - Pro</title>
     <style type="text/css">
-        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f9f9f9; }
-        #header { background: #fff; padding: 15px 30px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; }
-        .lang-switcher a { text-decoration: none; margin-right: 15px; color: #333; font-size: 14px; }
-        .lang-switcher img { width: 20px; vertical-align: middle; border: 1px solid #ccc; }
-        .empresa-link a { background: #000; color: #fff; padding: 8px 15px; text-decoration: none; border-radius: 4px; font-weight: bold; }
-        #main-content { text-align: center; margin-top: 80px; }
-        .drop-zone { border: 2px dashed #bbb; padding: 50px; width: 50%; margin: 0 auto; background: #fff; cursor: pointer; border-radius: 10px; }
-        .result-box { margin-top: 30px; padding: 20px; background: #e7f3ff; display: inline-block; border-radius: 5px; border: 1px solid #b6d4fe; }
-        .error-box { margin-top: 30px; padding: 20px; background: #ffe7e7; display: inline-block; border-radius: 5px; border: 1px solid #feb6b6; color: #d00; }
-        input[type="text"] { width: 350px; padding: 8px; border: 1px solid #ccc; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background: #f4f7f6; text-align: center; }
+        #header { background: #fff; padding: 15px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; }
+        .btn-empresa { background: #000; color: #fff; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; }
+        #main { margin-top: 50px; }
+        .drop-zone { border: 3px dashed #3498db; background: #fff; width: 400px; margin: 0 auto; padding: 60px; border-radius: 20px; cursor: pointer; transition: 0.3s; }
+        .drop-zone:hover { background: #e8f4fd; border-color: #2980b9; }
+        
+        /* Loading Spinner */
+        #loading { display: none; margin-top: 20px; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .result-box { margin-top: 30px; background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: inline-block; }
+        input[type="text"] { width: 300px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
     </style>
 </head>
 <body>
 
     <div id="header">
-        <div class="lang-switcher">
-            <span>Cambiar lenguaje: </span>
-            <a href="/es/"><img src="https://flagcdn.com/es.svg" alt="ES" /> ES</a>
-            <a href="/en/"><img src="https://flagcdn.com/gb.svg" alt="EN" /> EN</a>
+        <div>
+            <a href="/es/"><img src="https://flagcdn.com/es.svg" width="20" /></a>
+            <a href="/en/"><img src="https://flagcdn.com/gb.svg" width="20" /></a>
         </div>
-        <div class="empresa-link">
-            <a href="/sempresa/">Solución para empresas</a>
-        </div>
+        <a href="/sempresa/" class="btn-empresa">Solución para empresas</a>
     </div>
 
-    <div id="main-content">
-        <h1>Sube tu imagen rápidamente</h1>
-        <p>Arrastra o selecciona un archivo para comenzar</p>
-
-        <form action="" method="post" enctype="multipart/form-data">
+    <div id="main">
+        <h1>Sube tu archivo</h1>
+        
+        <form id="uploadForm" action="" method="post" enctype="multipart/form-data">
             <div class="drop-zone" onclick="document.getElementById('fileInput').click()">
-                <input type="file" name="archivo" id="fileInput" style="display:none;" onchange="this.form.submit()" />
-                <strong>Haz clic aquí o suelta tu imagen</strong>
+                <input type="file" name="archivo" id="fileInput" style="display:none;" onchange="showLoading()" />
+                <strong>Haz clic para subir imagen</strong>
             </div>
         </form>
 
+        <div id="loading">
+            <div class="spinner"></div>
+            <p>Esto tardará unos segundos, mientras espere...</p>
+        </div>
+
         <?php if ($urlImagen != ""): ?>
             <div class="result-box">
-                <strong><?php echo $mensaje; ?></strong><br /><br />
-                <input type="text" value="<?php echo $urlImagen; ?>" id="copyInput" readonly="readonly" />
-                <button onclick="copyLink()">Copiar Enlace</button>
+                <p style="color: green; font-weight: bold;"><?php echo $mensaje; ?></p>
+                <input type="text" value="<?php echo $urlImagen; ?>" id="copyInput" readonly />
+                <button onclick="copyLink()" style="padding: 10px; cursor:pointer;">Copiar</button>
             </div>
-        <?php elseif ($mensaje != ""): ?>
-            <div class="error-box">
-                <?php echo $mensaje; ?>
-            </div>
+        <?php elseif (strpos($mensaje, 'Error') !== false): ?>
+            <p style="color:red;"><?php echo $mensaje; ?></p>
         <?php endif; ?>
     </div>
 
     <script type="text/javascript">
+        function showLoading() {
+            document.getElementById('uploadForm').style.display = 'none';
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('uploadForm').submit();
+        }
         function copyLink() {
             var copyText = document.getElementById("copyInput");
             copyText.select();
             document.execCommand("copy");
-            alert("Enlace copiado con éxito");
+            alert("Enlace copiado: " + copyText.value);
         }
     </script>
+
 </body>
 </html>
