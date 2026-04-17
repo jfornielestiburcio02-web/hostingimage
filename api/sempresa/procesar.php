@@ -1,42 +1,61 @@
 <?PHP
-// CARGAR CONFIGURACIÓN DESDE LA RUTA PRIVADA
-INCLUDE $_SERVER['DOCUMENT_ROOT'] . '/api/config.php';
+// 1. FORZAR VISUALIZACIÓN DE ERRORES (SOLO PARA PRUEBAS)
+ERROR_REPORTING(E_ALL);
+INI_SET('DISPLAY_ERRORS', 1);
 
+// 2. CARGAR CONFIGURACIÓN
+// SI EL ARCHIVO ESTÁ EN /api/config.php PRUEBA ESTA RUTA ABSOLUTA
+$RUTA_CONFIG = $_SERVER['DOCUMENT_ROOT'] . '/api/config.php';
+
+IF (!FILE_EXISTS($RUTA_CONFIG)) {
+    DIE("ERROR CRÍTICO: NO SE ENCUENTRA EL ARCHIVO CONFIG.PHP EN: " . $RUTA_CONFIG);
+}
+
+INCLUDE $RUTA_CONFIG;
+
+// 3. PROCESAR LOGIN
 IF ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // RECOGIDA DE DATOS DEL FORMULARIO
-    $USER_LOGIN = $_POST['USUARIO'];
-    $PASS_LOGIN = $_POST['CONTRASENA'];
+    
+    $USER_LOGIN = $_POST['USUARIO'] ?? '';
+    $PASS_LOGIN = $_POST['CONTRASENA'] ?? '';
 
-    // URL PARA FIRESTORE REST API (GOOGLE CLOUD)
-    $URL_BASE = "https://firestore.googleapis.com/v1/projects/{$FIREBASE_CONFIG['projectId']}/databases/(default)/documents/usuarios/{$USER_LOGIN}";
+    // VALIDAR QUE NO ESTÉN VACÍOS
+    IF (EMPTY($USER_LOGIN) || EMPTY($PASS_LOGIN)) {
+        DIE("ERROR: CAMPOS VACÍOS");
+    }
 
-    // --- PASO 1: CONSULTAR EL DOCUMENTO DEL USUARIO ---
+    // URL PARA FIRESTORE
+    $PROJECT_ID = $FIREBASE_CONFIG['projectId'];
+    $URL_BASE = "https://firestore.googleapis.com/v1/projects/{$PROJECT_ID}/databases/(default)/documents/usuarios/{$USER_LOGIN}";
+
+    // --- PASO 1: CONSULTA ---
     $CH = CURL_INIT();
     CURL_SETOPT($CH, CURLOPT_URL, $URL_BASE);
     CURL_SETOPT($CH, CURLOPT_RETURNTRANSFER, TRUE);
     CURL_SETOPT($CH, CURLOPT_SSL_VERIFYPEER, FALSE);
     
     $RESPONSE = CURL_EXEC($CH);
-    // CORRECCIÓN: USO CORRECTO DE LA CONSTANTE DENTRO DE CURL_GETINFO
     $HTTP_CODE = CURL_GETINFO($CH, CURLINFO_HTTP_CODE); 
+    
+    IF (CURL_ERRNO($CH)) {
+        DIE("ERROR DE CURL: " . CURL_ERROR($CH));
+    }
     CURL_CLOSE($CH);
 
     $DATA = JSON_DECODE($RESPONSE, TRUE);
 
-    // --- PASO 2: VALIDACIÓN DE CREDENCIALES ---
-    // FIRESTORE ENCAPSULA LOS DATOS EN [fields][nombre][stringValue]
+    // --- PASO 2: VALIDACIÓN ---
     IF ($HTTP_CODE == 200 && ISSET($DATA['fields']['contrasena']['stringValue'])) {
         
         $DB_PASS = $DATA['fields']['contrasena']['stringValue'];
 
         IF ($DB_PASS === $PASS_LOGIN) {
             
-            // GENERAR NUEVO PHPSESSIONID (MAYÚSCULAS Y NÚMEROS)
+            // GENERAR PHPSESSIONID
             $LETRAS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
             $PHPSESS = SUBSTR(STR_SHUFFLE($LETRAS), 0, 12) . RAND(100, 999);
             
-            // --- PASO 3: ACTUALIZAR EL CAMPO PHPSESSION EN FIRESTORE ---
-            // SE USA UPDATEMASK PARA NO SOBREESCRIBIR TODO EL DOCUMENTO
+            // --- PASO 3: ACTUALIZAR ---
             $UPDATE_PAYLOAD = JSON_ENCODE([
                 'fields' => [
                     'phpsession' => ['stringValue' => $PHPSESS]
@@ -48,11 +67,11 @@ IF ($_SERVER['REQUEST_METHOD'] == 'POST') {
             CURL_SETOPT($CH_UP, CURLOPT_POSTFIELDS, $UPDATE_PAYLOAD);
             CURL_SETOPT($CH_UP, CURLOPT_RETURNTRANSFER, TRUE);
             CURL_SETOPT($CH_UP, CURLOPT_SSL_VERIFYPEER, FALSE);
-            CURL_SETOPT($CH_UP, CURLOPT_HTTPHEADER, ARRAY('CONTENT-TYPE: APPLICATION/JSON'));
+            CURL_SETOPT($CH_UP, CURLOPT_HTTPHEADER, ARRAY('Content-Type: application/json'));
             CURL_EXEC($CH_UP);
             CURL_CLOSE($CH_UP);
 
-            // --- PASO 4: REDIRECCIÓN CON PARÁMETROS SOLICITADOS ---
+            // --- PASO 4: REDIRECCIÓN ---
             $ALEATORIO_TXT = SUBSTR(STR_SHUFFLE($LETRAS), 0, 10);
             $RND_NUM = RAND(111111, 999999);
 
@@ -65,14 +84,12 @@ IF ($_SERVER['REQUEST_METHOD'] == 'POST') {
             EXIT();
 
         } ELSE {
-            // ERROR DE CONTRASEÑA EN FORMATO TRANSITIONAL
-            ECHO "<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML 4.01 TRANSITIONAL//EN' 'http://www.w3.org/TR/html4/loose.dtd'>
-            <HTML><BODY><SCRIPT TYPE='TEXT/JAVASCRIPT'>ALERT('Se produció el siguiente error: Su clave es incorrecta'); WINDOW.LOCATION.HREF='/sempresa/';</SCRIPT></BODY></HTML>";
+            ECHO "<HTML><BODY><SCRIPT>ALERT('CONTRASEÑA INCORRECTA'); WINDOW.LOCATION.HREF='login.php';</SCRIPT></BODY></HTML>";
         }
     } ELSE {
-        // ERROR DE USUARIO O CONEXIÓN EN FORMATO TRANSITIONAL
-        ECHO "<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML 4.01 TRANSITIONAL//EN' 'http://www.w3.org/TR/html4/loose.dtd'>
-        <HTML><BODY><SCRIPT TYPE='TEXT/JAVASCRIPT'>ALERT('Se produció el siguiente error al procesar su solicitud: Error de conexión'); WINDOW.LOCATION.HREF='/sempresa/';</SCRIPT></BODY></HTML>";
+        ECHO "<HTML><BODY><SCRIPT>ALERT('USUARIO NO ENCONTRADO O ERROR DE FIREBASE (CODE: $HTTP_CODE)'); WINDOW.LOCATION.HREF='login.php';</SCRIPT></BODY></HTML>";
     }
+} ELSE {
+    HEADER("LOCATION: login.php");
 }
 ?>
