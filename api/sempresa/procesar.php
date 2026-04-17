@@ -75,7 +75,7 @@ IF ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $ALEATORIO_TXT = SUBSTR(STR_SHUFFLE($LETRAS), 0, 10);
             $RND_NUM = RAND(111111, 999999);
 
-            $URL_FINAL = "/concedido.php?ALEATORIO=" . $ALEATORIO_TXT . 
+            $URL_FINAL = "concedido.php?ALEATORIO=" . $ALEATORIO_TXT . 
                          "&rndval=" . $RND_NUM . 
                          "&phpsession=" . $PHPSESS . 
                          "&PAGINA_ANTERIOR_CON_BOTONERA=-1&click|top|action";
