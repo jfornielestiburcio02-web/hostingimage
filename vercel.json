@@ -14,6 +14,10 @@
       "dest": "/api/sempresa/index.php"
     },
     {
+      "src": "/sempresa/index.php",
+      "dest": "/recursonodisponible.htm"
+    },
+    {
       "src": "/(.*)\\.php",
       "dest": "/api/$1.php"
     },
