@@ -10,6 +10,10 @@
       "dest": "/api/index.php"
     },
     {
+      "src": "/sempresa/",
+      "dest": "/api/sempresa/index.php"
+    },
+    {
       "src": "/(.*)\\.php",
       "dest": "/api/$1.php"
     },
