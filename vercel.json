@@ -15,7 +15,7 @@
     },
     {
       "src": "/sempresa/index.php",
-      "dest": "/recursonodisponible.htm"
+      "status": 404
     },
     {
       "src": "/(.*)\\.php",
