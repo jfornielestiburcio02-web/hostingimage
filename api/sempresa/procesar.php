@@ -116,7 +116,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         exit();
 
     } else {
-        echo "<script>alert('ERROR: ACCESO DENEGADO'); window.location.href='login.php';</script>";
+        echo "<script>alert('Se produció un error al procesar con su solicitud.'); window.location.href='/sempresa/';</script>";
     }
 }
 ?>
