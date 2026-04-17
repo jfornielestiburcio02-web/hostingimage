@@ -84,12 +84,12 @@ IF ($_SERVER['REQUEST_METHOD'] == 'POST') {
             EXIT();
 
         } ELSE {
-            ECHO "<HTML><BODY><SCRIPT>ALERT('CONTRASEÑA INCORRECTA'); WINDOW.LOCATION.HREF='login.php';</SCRIPT></BODY></HTML>";
+            ECHO "<HTML><BODY><SCRIPT>ALERT('Usuario y/o Contraseña incorrectos'); WINDOW.LOCATION.HREF='/sempresa/';</SCRIPT></BODY></HTML>";
         }
     } ELSE {
-        ECHO "<HTML><BODY><SCRIPT>ALERT('USUARIO NO ENCONTRADO O ERROR DE FIREBASE (CODE: $HTTP_CODE)'); WINDOW.LOCATION.HREF='login.php';</SCRIPT></BODY></HTML>";
+        ECHO "<HTML><BODY><SCRIPT>ALERT('Se produció un error de conexión (CODE: $HTTP_CODE)'); WINDOW.LOCATION.HREF='/sempresa/';</SCRIPT></BODY></HTML>";
     }
 } ELSE {
-    HEADER("LOCATION: login.php");
+    HEADER("LOCATION: /sempresa/");
 }
 ?>
