@@ -10,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') exit;
 $githubToken = getenv('CREA_IMAGEN_HTML'); // Variable de entorno en Vercel
 $githubRepo  = "jfornielestiburcio02-web/hostingimage"; // CAMBIA ESTO
 $proyectoID  = "hostingimage1";
-$miDominio   = "https://hostingimage-bice.vercel.app";
+$miDominio   = "https://imagehostinger.vercel.app";
 
 // 1. CAPTURA DE DATOS
 $apiKey    = $_POST['apiKey'] ?? '';
@@ -83,7 +83,7 @@ if ($httpCodeGH !== 201) {
 }
 
 // 4. CONSTRUCCIÓN DE TU URL PERSONALIZADA
-// Esto devuelve: https://hostingimage-bice.vercel.app/imagenes/Empresa/12345_foto.jpg
+// Esto devuelve: https://imagehostinger.app/imagenes/Empresa/12345_foto.jpg
 $finalUrl = "{$miDominio}/imagenes/{$nombreEmpresa}/{$nombreArchivo}";
 
 // 5. REGISTRO EN LA COLECCIÓN DE IMÁGENES DEL USUARIO
