@@ -119,7 +119,7 @@
         <H2>Login</H2>
         <DIV CLASS="SUBTITLE"></DIV>
         
-        <FORM ACTION="procesar.php" METHOD="POST">
+        <FORM ACTION="/sempresa/procesar.php" METHOD="POST">
             <DIV CLASS="INPUT-GROUP">
                 <LABEL>User</LABEL>
                 <INPUT TYPE="TEXT" NAME="USUARIO" REQUIRED>
@@ -142,7 +142,7 @@
         <H2> Create Account </H2>
         <DIV CLASS="SUBTITLE"></DIV>
         
-        <FORM ACTION="registrar.php" METHOD="POST">
+        <FORM ACTION="/sempresa/registrar.php" METHOD="POST">
             <DIV CLASS="INPUT-GROUP">
                 <LABEL>User</LABEL>
                 <INPUT TYPE="TEXT" NAME="USUARIO" REQUIRED>
@@ -162,7 +162,7 @@
         </FORM>
         
         <DIV CLASS="TOGGLE-LINK">
-            ¿Did you already have a account? <A HREF="JAVASCRIPT:VOID(0)" ONCLICK="toggleForms()">Login</A>
+            ¿Did you already have an account? <A HREF="JAVASCRIPT:VOID(0)" ONCLICK="toggleForms()">Login</A>
         </DIV>
     </DIV>
 
