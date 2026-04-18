@@ -1,0 +1,98 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 TRANSITIONAL//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>GUÍAS DE AYUDA - HOSTING IMAGE</TITLE>
+    <META HTTP-EQUIV="CONTENT-TYPE" CONTENT="TEXT/HTML; CHARSET=UTF-8">
+    <STYLE TYPE="TEXT/CSS">
+        BODY { MARGIN: 0; PADDING: 0; FONT-FAMILY: VERDANA; BACKGROUND-COLOR: #FFF; COLOR: #333; }
+        .MASTER-CONTAINER { DISPLAY: FLEX; MIN-HEIGHT: 100VH; }
+        
+        .SIDEBAR { 
+            WIDTH: 280PX; 
+            BACKGROUND-COLOR: #F8F8F8; 
+            BORDER-RIGHT: 2PX SOLID #333; 
+            PADDING: 30PX 20PX;
+            BOX-SIZING: BORDER-BOX;
+        }
+        
+        .MAIN-CONTENT { 
+            FLEX-GROW: 1; 
+            PADDING: 50PX; 
+            BOX-SIZING: BORDER-BOX;
+            MAX-WIDTH: 900PX;
+        }
+
+        .BTN { 
+            DISPLAY: BLOCK; 
+            MARGIN-BOTTOM: 15PX; 
+            PADDING: 15PX; 
+            BACKGROUND-COLOR: #333; 
+            COLOR: #FFF; 
+            TEXT-DECORATION: NONE; 
+            FONT-WEIGHT: BOLD; 
+            TEXT-ALIGN: CENTER;
+            BORDER-RADIUS: 4PX;
+            FONT-SIZE: 13PX;
+        }
+        .BTN:HOVER { BACKGROUND-COLOR: #000; }
+        
+        .GUIA-BOX { 
+            BACKGROUND-COLOR: #F9F9F9; 
+            BORDER: 1PX SOLID #DDD; 
+            PADDING: 25PX; 
+            BORDER-RADIUS: 8PX;
+            LINE-HEIGHT: 1.6;
+        }
+
+        H1 { MARGIN-TOP: 0; FONT-SIZE: 26PX; }
+        H2 { COLOR: #333; FONT-SIZE: 20PX; MARGIN-TOP: 0; }
+        H3 { MARGIN-TOP: 0; FONT-SIZE: 16PX; COLOR: #666; TEXT-TRANSFORM: UPPERCASE; }
+        HR { BORDER: 0; BORDER-TOP: 1PX SOLID #DDD; MARGIN: 20PX 0; }
+        CODE { BACKGROUND: #EEE; PADDING: 2PX 5PX; BORDER-RADIUS: 3PX; FONT-FAMILY: MONOSPACE; }
+        
+        .ERROR-LIST { COLOR: #D32F2F; BACKGROUND: #FFEBEE; PADDING: 15PX; BORDER-RADIUS: 5PX; LIST-STYLE: NONE; }
+        .ERROR-LIST LI { MARGIN-BOTTOM: 10PX; }
+    </STYLE>
+</HEAD>
+<BODY>
+
+<DIV CLASS="MASTER-CONTAINER">
+    
+    <DIV CLASS="SIDEBAR">
+        <H3>Ayuda y Soporte</H3>
+        <HR>
+        <A HREF="conectar_apis.php" CLASS="BTN">Como conectar apis</A>
+        <HR>
+        <A HREF="index.php" STYLE="COLOR: #333; TEXT-DECORATION: NONE; FONT-SIZE: 12PX; FONT-WEIGHT: BOLD;">&larr; Volver al Panel</A>
+    </DIV>
+
+    <DIV CLASS="MAIN-CONTENT">
+        <H1>Guías de Ayudas y Errores</H1>
+        
+        <DIV CLASS="GUIA-BOX">
+            <H2>Solución de Problemas Comunes</H2>
+            <P>Si tienes problemas al subir imágenes, revisa los siguientes errores frecuentes de la API:</P>
+            
+            <UL CLASS="ERROR-LIST">
+                <LI><STRONG>Error: Faltan datos:</STRONG> Asegúrate de estar enviando el <CODE>apiKey</CODE>, <CODE>usuarioID</CODE> y el archivo de imagen en el FormData.</LI>
+                <LI><STRONG>Error: API Key no válida:</STRONG> Verifica que la clave HI-XXXX coincida con la que aparece en tu sección "Conseguir API".</LI>
+                <LI><STRONG>Error en almacenamiento:</STRONG> Esto ocurre cuando el Token de GitHub ha caducado o el repositorio no tiene permisos de escritura.</LI>
+                <LI><STRONG>Error de conexión:</STRONG> Revisa que la URL de destino sea <CODE>https://hostingimage-bice.vercel.app/upload.php</CODE>.</LI>
+            </UL>
+
+            <HR>
+
+            <H2>Consejos de Implementación</H2>
+            <P>Para un rendimiento óptimo, te recomendamos:</P>
+            <UL>
+                <LI>Usar imágenes en formato JPG o PNG para reducir el peso.</LI>
+                <LI>No subir archivos mayores a 5MB para evitar cortes en la conexión.</LI>
+                <LI>Implementar la subida de forma asíncrona usando <CODE>fetch</CODE> o <CODE>AJAX</CODE>.</LI>
+            </UL>
+        </DIV>
+    </DIV>
+
+</DIV>
+
+</BODY>
+</HTML>
