@@ -1,41 +1,60 @@
 <?php
 session_start();
 
-// 1. CONFIGURACIÓN DE DATOS
+// 1. CONFIGURACIÓN
 $proyectoID = "hostingimage1";
-$usuario    = $_SESSION['usuario'] ?? ''; // El nombre del documento en la colección 'usuarios'
-$tokenURL   = $_GET['ALEATORIO'] ?? '';   // Capturamos ?ALEATORIO= de la URL
+$tokenURL   = $_GET['ALEATORIO'] ?? '';
 
-// 2. PROTECCIÓN INICIAL: Si no hay usuario en sesión o el parámetro está vacío, fuera
-if (empty($usuario) || empty($tokenURL)) {
-    exit("ACCESO DENEGADO: SESIÓN O PARÁMETRO AUSENTE");
+if (empty($tokenURL)) {
+    exit("ACCESO DENEGADO: Falta el parámetro ALEATORIO.");
 }
 
-// 3. CONSULTA REST A FIRESTORE (PHP Puro mediante cURL)
-// Buscamos en: usuarios / {usuario}
-$url = "https://firestore.googleapis.com/v1/projects/{$proyectoID}/databases/(default)/documents/usuarios/" . urlencode($usuario);
+// 2. CONSTRUCCIÓN DE LA CONSULTA (Buscamos en toda la colección 'usuarios')
+$url = "https://firestore.googleapis.com/v1/projects/{$proyectoID}/databases/(default)/documents:runQuery";
 
-$ch = curl_init();
-curl_setopt($ch, CURLOPT_URL, $url);
+// Estructura JSON para buscar el campo 'phpsession' que sea igual al token de la URL
+$query = [
+    'structuredQuery' => [
+        'from' => [['collectionId' => 'usuarios']],
+        'where' => [
+            'fieldFilter' => [
+                'field' => ['fieldPath' => 'phpsession'],
+                'op' => 'EQUAL',
+                'value' => ['stringValue' => $tokenURL]
+            ]
+        ],
+        'limit' => 1
+    ]
+];
+
+$payload = json_encode($query);
+
+// 3. EJECUCIÓN MEDIANTE CURL (POST)
+$ch = curl_init($url);
+curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_TIMEOUT, 5);
-curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); 
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    'Content-Type: application/json',
+    'Content-Length: ' . strlen($payload)
+]);
+curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+
 $response = curl_exec($ch);
 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 curl_close($ch);
 
 $data = json_decode($response, true);
 
-// 4. VALIDACIÓN DEL STRING 'phpsession'
-// Extraemos el valor stringValue del JSON devuelto por Firebase
-$tokenEnDB = $data['fields']['phpsession']['stringValue'] ?? null;
-
-if ($httpCode !== 200 || $tokenEnDB === null || $tokenEnDB !== $tokenURL) {
-    // Si el usuario no existe, o el token de la URL no coincide con el de la DB: FUERA
-    exit("ACCESO DENEGADO: TOKEN INVÁLIDO EN BASE DE DATOS");
+// 4. VALIDACIÓN DE RESULTADOS
+// Firebase devuelve un array vacío [] si no encuentra nada, o un array con el documento.
+// Si no hay 'document', es que no existe nadie con ese phpsession.
+if ($httpCode !== 200 || empty($data) || !isset($data[0]['document'])) {
+    exit("ACCESO DENEGADO: No existe ningún usuario con ese token.");
 }
 
-// SI LA VALIDACIÓN ES CORRECTA, SE MUESTRA EL CONTENIDO
+// SI LLEGA AQUÍ, EL TOKEN EXISTE EN LA BASE DE DATOS
 ?>
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 TRANSITIONAL//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <HTML>
@@ -56,20 +75,18 @@ if ($httpCode !== 200 || $tokenEnDB === null || $tokenEnDB !== $tokenURL) {
             BORDER-RADIUS: 3PX;
         }
         .BTN:HOVER { BACKGROUND-COLOR: #000; }
-        H1 { MARGIN-TOP: 0; COLOR: #000; }
-        HR { BORDER: 0; BORDER-TOP: 1PX SOLID #CCC; MARGIN: 20PX 0; }
+        H1 { MARGIN-TOP: 0; }
     </STYLE>
 </HEAD>
 <BODY>
 
     <DIV CLASS="BOX">
-        <H1>ÁREA SEGURA</H1>
-        <P>Validación Firestore: <strong>EXITOSA</strong></P>
+        <H1>CONTENIDO VALIDADO</H1>
+        <P>Token encontrado en la base de datos de usuarios.</P>
         <HR>
         
         <A HREF="conseguirapi.php" CLASS="BTN">Conseguir API</A>
         <A HREF="subidaManual.php" CLASS="BTN">Subir manualmente</A>
-        
     </DIV>
 
 </BODY>
