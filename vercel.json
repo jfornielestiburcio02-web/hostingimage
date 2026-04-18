@@ -14,6 +14,14 @@
       "dest": "/api/sempresa/index.php"
     },
     {
+      "src": "/en/sempresa/",
+      "dest": "/api/en/sempresa/index.php"
+    },
+    {
+      "src": "/es/",
+      "dest": "/api/es/index.php"
+    },
+    {
       "src": "/sempresa/index.php",
       "status": 404
     },
