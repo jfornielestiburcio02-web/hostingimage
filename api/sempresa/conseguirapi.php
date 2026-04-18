@@ -4,7 +4,7 @@ session_start();
 // --- CONFIGURACIÓN FIRESTORE ---
 $proyectoID = "hostingimage1";
 
-// 1. VALIDACIÓN DE SEGURIDAD (TOKEN OBLIGATORIO)
+// 1. VALIDACIÓN DE TOKEN (URL O SESIÓN)
 $tokenActual = $_GET['phpsession'] ?? $_SESSION['PHPSESS_MOTOR'] ?? '';
 
 if (empty($tokenActual)) {
@@ -12,9 +12,8 @@ if (empty($tokenActual)) {
     exit();
 }
 
-// 2. VALIDACIÓN REAL EN FIRESTORE Y OBTENCIÓN DEL USUARIO
+// 2. VALIDACIÓN DEL USUARIO Y OBTENCIÓN DE SU ID
 $urlQuery = "https://firestore.googleapis.com/v1/projects/{$proyectoID}/databases/(default)/documents:runQuery";
-
 $queryUser = [
     'structuredQuery' => [
         'from' => [['collectionId' => 'usuarios']],
@@ -35,119 +34,145 @@ curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($queryUser));
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-$responseUser = curl_exec($ch);
-$resUserData = json_decode($responseUser, true);
+$resUser = json_decode(curl_exec($ch), true);
 curl_close($ch);
 
-// Si el token no existe, fuera
-if (empty($resUserData) || !isset($resUserData[0]['document'])) {
-    exit("ACCESO DENEGADO: Sesión inválida.");
+if (empty($resUser) || !isset($resUser[0]['document'])) {
+    exit("ACCESO DENEGADO");
 }
 
-// EXTRAEMOS EL ID DEL DOCUMENTO (Nombre del usuario en la DB)
-$pathCompleto = $resUserData[0]['document']['name'];
-$partesPath = explode('/', $pathCompleto);
-$idUsuarioDB = end($partesPath); 
+$pathPartes = explode('/', $resUser[0]['document']['name']);
+$idUsuarioDB = end($pathPartes);
 
-// 3. OBTENER LAS APIS PERTENECIENTES AL USUARIO
-// Buscamos en apis / {usuario} / ...
-$urlApis = "https://firestore.googleapis.com/v1/projects/{$proyectoID}/databases/(default)/documents/apis/" . urlencode($idUsuarioDB) . "/claves";
+// 3. LÓGICA DE CREACIÓN (PROCESAR FORMULARIO EN EL MISMO PHP)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nombreEmpresa'])) {
+    $nombreEmp = $_POST['nombreEmpresa'];
+    $nuevaApiClave = bin2hex(random_bytes(16)); // Genera clave aleatoria
 
-$ch = curl_init($urlApis);
+    $urlCreate = "https://firestore.googleapis.com/v1/projects/{$proyectoID}/databases/(default)/documents/apis/" . urlencode($idUsuarioDB) . "/claves";
+    
+    $newData = [
+        'fields' => [
+            'api' => ['stringValue' => $nuevaApiClave],
+            'nombreEmpresa' => ['stringValue' => $nombreEmp]
+        ]
+    ];
+
+    $ch = curl_init($urlCreate);
+    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($newData));
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_exec($ch);
+    curl_close($ch);
+
+    // Redirigir para limpiar el POST
+    header("Location: " . $_SERVER['PHP_SELF'] . "?phpsession=" . urlencode($tokenActual));
+    exit();
+}
+
+// 4. OBTENER APIS EXISTENTES
+$urlGetApis = "https://firestore.googleapis.com/v1/projects/{$proyectoID}/databases/(default)/documents/apis/" . urlencode($idUsuarioDB) . "/claves";
+$ch = curl_init($urlGetApis);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-$responseApis = curl_exec($ch);
-$apisData = json_decode($responseApis, true);
+$apisData = json_decode(curl_exec($ch), true);
 curl_close($ch);
-
 $listaApis = $apisData['documents'] ?? [];
-?>
 
+?>
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 TRANSITIONAL//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <HTML>
 <HEAD>
     <TITLE>CONSEGUIR API</TITLE>
     <META HTTP-EQUIV="CONTENT-TYPE" CONTENT="TEXT/HTML; CHARSET=UTF-8">
     <STYLE TYPE="TEXT/CSS">
-        BODY { MARGIN: 0; PADDING: 50PX; FONT-FAMILY: VERDANA; BACKGROUND-COLOR: #FFF; COLOR: #333; }
-        .CONTAINER { MAX-WIDTH: 800PX; MARGIN: AUTO; }
-        H1 { FONT-SIZE: 24PX; MARGIN-BOTTOM: 10PX; TEXT-TRANSFORM: UPPERCASE; }
-        H2 { FONT-SIZE: 18PX; MARGIN-TOP: 30PX; BORDER-BOTTOM: 2PX SOLID #333; PADDING-BOTTOM: 5PX; }
+        BODY { MARGIN: 0; PADDING: 0; FONT-FAMILY: VERDANA; BACKGROUND-COLOR: #FFF; }
+        .MASTER-CONTAINER { DISPLAY: FLEX; MIN-HEIGHT: 100VH; }
+        
+        /* SIDEBAR CONSTANTE */
+        .SIDEBAR { WIDTH: 280PX; BACKGROUND-COLOR: #F8F8F8; BORDER-RIGHT: 2PX SOLID #333; PADDING: 30PX 20PX; BOX-SIZING: BORDER-BOX; }
+        .BTN-NAV { DISPLAY: BLOCK; MARGIN-BOTTOM: 15PX; PADDING: 15PX; BACKGROUND-COLOR: #333; COLOR: #FFF; TEXT-DECORATION: NONE; FONT-WEIGHT: BOLD; TEXT-ALIGN: CENTER; BORDER-RADIUS: 4PX; FONT-SIZE: 13PX; }
+        .BTN-NAV:HOVER { BACKGROUND-COLOR: #000; }
+
+        /* CONTENIDO PRINCIPAL */
+        .MAIN-CONTENT { FLEX-GROW: 1; PADDING: 50PX; BOX-SIZING: BORDER-BOX; }
+        H1 { FONT-SIZE: 24PX; MARGIN-BOTTOM: 10PX; }
+        H2 { FONT-SIZE: 18PX; MARGIN-TOP: 35PX; BORDER-BOTTOM: 2PX SOLID #333; PADDING-BOTTOM: 5PX; }
         .UTILIDADES { BACKGROUND: #F9F9F9; PADDING: 15PX; BORDER-LEFT: 4PX SOLID #333; MARGIN: 20PX 0; }
-        .UTILIDADES UL { MARGIN: 10PX 0; PADDING-LEFT: 20PX; }
         
-        .API-BOX { BACKGROUND: #EEE; PADDING: 15PX; MARGIN-TOP: 10PX; DISPLAY: FLEX; JUSTIFY-CONTENT: BETWEEN; ALIGN-ITEMS: CENTER; BORDER-RADIUS: 4PX; }
-        .API-HIDDEN { FONT-FAMILY: MONOSPACE; BACKGROUND: #DDD; PADDING: 5PX; COLOR: #666; }
+        .API-ITEM { BACKGROUND: #EEE; PADDING: 15PX; MARGIN-TOP: 10PX; BORDER-RADIUS: 4PX; DISPLAY: FLEX; JUSTIFY-CONTENT: SPACE-BETWEEN; }
+        .API-SECRET { FONT-FAMILY: MONOSPACE; COLOR: #666; }
         
-        .FORM-GROUP { MARGIN-TOP: 20PX; PADDING: 20PX; BORDER: 1PX SOLID #CCC; }
+        .FORM-CREAR { MARGIN-TOP: 20PX; PADDING: 20PX; BORDER: 1PX SOLID #CCC; BACKGROUND: #FAFAFA; }
         .INPUT-TXT { PADDING: 10PX; WIDTH: 250PX; FONT-FAMILY: VERDANA; }
-        .BTN-CREAR { PADDING: 10PX 20PX; BACKGROUND: #333; COLOR: #FFF; BORDER: NONE; CURSOR: POINTER; FONT-WEIGHT: BOLD; }
-        .BTN-CREAR:HOVER { BACKGROUND: #000; }
+        .BTN-NUEVA { PADDING: 10PX 20PX; BACKGROUND: #333; COLOR: #FFF; BORDER: NONE; CURSOR: POINTER; FONT-WEIGHT: BOLD; }
         
-        .FOOTER-LINK { MARGIN-TOP: 50PX; FONT-SIZE: 10PX; COLOR: #999; TEXT-ALIGN: CENTER; }
-        .FOOTER-LINK A { COLOR: #999; TEXT-DECORATION: NONE; }
-        
-        .EYE-BTN { CURSOR: POINTER; MARGIN-LEFT: 10PX; FONT-SIZE: 12PX; TEXT-DECORATION: UNDERLINE; COLOR: BLUE; }
+        .DUDAS { MARGIN-TOP: 40PX; FONT-SIZE: 10PX; TEXT-ALIGN: CENTER; }
+        .DUDAS A { COLOR: #999; TEXT-DECORATION: NONE; }
+        .VER-BTN { CURSOR: POINTER; COLOR: BLUE; TEXT-DECORATION: UNDERLINE; FONT-SIZE: 11PX; MARGIN-LEFT: 10PX; }
     </STYLE>
     <SCRIPT TYPE="TEXT/JAVASCRIPT">
-        function toggleApi(id) {
-            var el = document.getElementById(id);
-            var btn = document.getElementById('btn-'+id);
-            if (el.getAttribute('data-hidden') == 'true') {
-                el.innerHTML = el.getAttribute('data-real');
-                el.setAttribute('data-hidden', 'false');
-                btn.innerHTML = '[Ocultar]';
+        function verApi(id, realValue) {
+            var span = document.getElementById(id);
+            if (span.innerHTML === '**********') {
+                span.innerHTML = realValue;
             } else {
-                el.innerHTML = '**********';
-                el.setAttribute('data-hidden', 'true');
-                btn.innerHTML = '[Ver]';
+                span.innerHTML = '**********';
             }
         }
     </SCRIPT>
 </HEAD>
 <BODY>
 
-<DIV CLASS="CONTAINER">
-    <H1>Consigue tu API</H1>
-    
-    <DIV CLASS="UTILIDADES">
-        <STRONG>Utilidades:</STRONG>
-        <UL>
-            <LI>Puedes subir imágenes desde tu web</LI>
-            <LI>Carpeta con nombre de tu empresa</LI>
-        </UL>
+<DIV CLASS="MASTER-CONTAINER">
+    <DIV CLASS="SIDEBAR">
+        <H3 STYLE="FONT-SIZE:14PX; COLOR:#666;">MENÚ</H3>
+        <HR>
+        <A HREF="conseguirapi.php?phpsession=<?php echo urlencode($tokenActual); ?>" CLASS="BTN-NAV">Conseguir API</A>
+        <A HREF="subidaManual.php?phpsession=<?php echo urlencode($tokenActual); ?>" CLASS="BTN-NAV">Subir manualmente</A>
     </DIV>
 
-    <H2>APIS PERTENECIENTES</H2>
-    <?php if (empty($listaApis)): ?>
-        <P STYLE="MARGIN-TOP:15PX;">No tienes ninguna API. <STRONG>Pulse para crear una api</STRONG> abajo.</P>
-    <?php else: 
-        foreach ($listaApis as $index => $doc): 
-            $apiValue = $doc['fields']['api']['stringValue'] ?? 'N/A';
-            $nombreEmp = $doc['fields']['nombreEmpresa']['stringValue'] ?? 'Sin nombre';
-            $idUnico = "api_" . $index;
-    ?>
-        <DIV CLASS="API-BOX">
-            <DIV>
-                <STRONG><?php echo htmlspecialchars($nombreEmp); ?>:</STRONG> 
-                <SPAN ID="<?php echo $idUnico; ?>" CLASS="API-HIDDEN" data-real="<?php echo htmlspecialchars($apiValue); ?>" data-hidden="true">**********</SPAN>
-                <SPAN ID="btn-<?php echo $idUnico; ?>" CLASS="EYE-BTN" ONCLICK="toggleApi('<?php echo $idUnico; ?>')">[Ver]</SPAN>
-            </DIV>
+    <DIV CLASS="MAIN-CONTENT">
+        <H1>Consigue tu API</H1>
+        
+        <DIV CLASS="UTILIDADES">
+            <STRONG>Utilidades:</STRONG>
+            <UL>
+                <LI>Puedes subir imágenes desde tu web</LI>
+                <LI>Carpeta con nombre de tu empresa</LI>
+            </UL>
         </DIV>
-    <?php endforeach; endif; ?>
 
-    <H2>CREAR NUEVA</H2>
-    <DIV CLASS="FORM-GROUP">
-        <FORM METHOD="POST" ACTION="procesar_nueva_api.php">
-            <P>Nombre de la empresa:</P>
-            <INPUT TYPE="TEXT" NAME="nombreEmpresa" CLASS="INPUT-TXT" PLACEHOLDER="Ej: Mi Empresa S.L.">
-            <INPUT TYPE="HIDDEN" NAME="phpsession" VALUE="<?php echo htmlspecialchars($tokenActual); ?>">
-            <BUTTON TYPE="SUBMIT" CLASS="BTN-CREAR">Nueva</BUTTON>
-        </FORM>
-    </DIV>
+        <H2>APIS PERTENECIENTES</H2>
+        <?php if (empty($listaApis)): ?>
+            <P STYLE="COLOR:RED;">Pulse para crear una api</P>
+        <?php else: ?>
+            <?php foreach ($listaApis as $i => $doc): 
+                $val = $doc['fields']['api']['stringValue'] ?? '';
+                $nom = $doc['fields']['nombreEmpresa']['stringValue'] ?? 'Sin Nombre';
+                $idSpan = "key_".$i;
+            ?>
+                <DIV CLASS="API-ITEM">
+                    <SPAN><STRONG><?php echo htmlspecialchars($nom); ?>:</STRONG> <SPAN ID="<?php echo $idSpan; ?>" CLASS="API-SECRET">**********</SPAN></SPAN>
+                    <SPAN CLASS="VER-BTN" ONCLICK="verApi('<?php echo $idSpan; ?>', '<?php echo $val; ?>')">Ver</SPAN>
+                </DIV>
+            <?php endforeach; ?>
+        <?php endif; ?>
 
-    <DIV CLASS="FOOTER-LINK">
-        <A HREF="#">dudas y ayuda</A>
+        <H2>CREAR NUEVA</H2>
+        <DIV CLASS="FORM-CREAR">
+            <FORM METHOD="POST">
+                <P>Nombre de la empresa:</P>
+                <INPUT TYPE="TEXT" NAME="nombreEmpresa" CLASS="INPUT-TXT" REQUIRED>
+                <BUTTON TYPE="SUBMIT" CLASS="BTN-NUEVA">Nueva</BUTTON>
+            </FORM>
+        </DIV>
+
+        <DIV CLASS="DUDAS">
+            <A HREF="#">dudas y ayuda</A>
+        </DIV>
     </DIV>
 </DIV>
 
