@@ -6,70 +6,51 @@ header("Content-Type: application/json");
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') exit;
 
-// --- CONFIGURACIÓN MAESTRA ---
-$githubToken = "TU_TOKEN_GITHUB_AQUI"; // Tu Personal Access Token
-$githubRepo  = "USUARIO/REPOSITORIO";  // Tu repo de GitHub
+// --- CONFIGURACIÓN ---
+$githubToken = "CREA_IMAGEN_HTML";
+$githubRepo  = "jfornielestiburcio02-web/hostingimage"; 
 $proyectoID  = "hostingimage1";
 
-// 1. RECEPCIÓN DE DATOS
-$apiKey = $_POST['apiKey'] ?? '';
-$path   = $_POST['path'] ?? '/imagenes/default/';
-$image  = $_FILES['image'] ?? null;
+// 1. CAPTURA
+$apiKey    = $_POST['apiKey'] ?? '';
+$usuarioID = $_POST['usuarioID'] ?? ''; // El cliente debe enviar su ID de usuario
+$path      = $_POST['path'] ?? '/imagenes/default/';
+$image     = $_FILES['image'] ?? null;
 
-if (empty($apiKey) || !$image) {
-    echo json_encode(["success" => false, "error" => "Faltan parámetros o imagen."]);
+if (empty($apiKey) || empty($usuarioID) || !$image) {
+    echo json_encode(["success" => false, "error" => "Faltan datos (apiKey, usuarioID o imagen)"]);
     exit;
 }
 
-// 2. VALIDAR API KEY Y OBTENER USUARIO (Búsqueda profunda en 'claves')
-$urlQuery = "https://firestore.googleapis.com/v1/projects/{$proyectoID}/databases/(default)/documents:runQuery";
+// 2. VALIDACIÓN DIRECTA EN FIRESTORE
+// Buscamos el documento del usuario directamente: apis/{usuarioID}
+$urlFirestore = "https://firestore.googleapis.com/v1/projects/{$proyectoID}/databases/(default)/documents/apis/" . urlencode($usuarioID);
 
-$queryData = [
-    'structuredQuery' => [
-        'from' => [['collectionId' => 'claves', 'allDescendants' => true]],
-        'where' => [
-            'fieldFilter' => [
-                'field' => ['fieldPath' => 'api'],
-                'op' => 'EQUAL',
-                'value' => ['stringValue' => $apiKey]
-            ]
-        ],
-        'limit' => 1
-    ]
-];
-
-$ch = curl_init($urlQuery);
-curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($queryData));
+$ch = curl_init($urlFirestore);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-$resFS = json_decode(curl_exec($ch), true);
-$httpCodeFS = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+$response = curl_exec($ch);
+$data = json_decode($response, true);
+$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 curl_close($ch);
 
-// Verificación de existencia
-if ($httpCodeFS !== 200 || empty($resFS) || !isset($resFS[0]['document'])) {
-    echo json_encode(["success" => false, "error" => "API Key no valida o no autorizada."]);
+// Comprobamos si el documento existe y si la clave coincide
+$apiGuardada = $data['fields']['api']['stringValue'] ?? '';
+
+if ($httpCode !== 200 || $apiGuardada !== $apiKey) {
+    echo json_encode(["success" => false, "error" => "API Key no válida para este usuario."]);
     exit;
 }
 
-// EXTRAEMOS EL ID DEL USUARIO DESDE EL PATH DEL DOCUMENTO
-// El path suele ser: projects/.../databases/(default)/documents/apis/{ID_USUARIO}/claves/{ID_DOC}
-$fullPath = $resFS[0]['document']['name'];
-$partes = explode('/', $fullPath);
-$usuarioID = $partes[count($partes) - 3]; // Es el ID que está detrás de 'claves'
+// 3. SUBIDA A GITHUB
+$nombreArchivo = time() . "_" . str_replace(' ', '_', $image['name']);
+$githubPath = trim($path, '/') . "/" . $nombreArchivo;
+$base64Content = base64_encode(file_get_contents($image['tmp_name']));
 
-// 3. PROCESAR SUBIDA A GITHUB
-$nombreArchivo = time() . "_" . basename($image['name']);
-$pathLimpio = trim($path, '/') . "/" . $nombreArchivo;
-$base64Image = base64_encode(file_get_contents($image['tmp_name']));
-
-$urlGithub = "https://api.github.com/repos/{$githubRepo}/contents/{$pathLimpio}";
-
+$urlGithub = "https://api.github.com/repos/{$githubRepo}/contents/{$githubPath}";
 $payloadGH = [
-    "message" => "Upload via API Key: " . $apiKey,
-    "content" => $base64Image,
-    "branch"  => "main"
+    "message" => "Upload from user: " . $usuarioID,
+    "content" => $base64Content
 ];
 
 $ch = curl_init($urlGithub);
@@ -87,35 +68,28 @@ $httpCodeGH = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 curl_close($ch);
 
 if ($httpCodeGH !== 201) {
-    echo json_encode(["success" => false, "error" => "Error al guardar en GitHub."]);
+    echo json_encode(["success" => false, "error" => "Error en GitHub"]);
     exit;
 }
 
-// URL FINAL USANDO CDN PARA MEJOR RENDIMIENTO
-$finalUrl = "https://cdn.jsdelivr.net/gh/{$githubRepo}/{$pathLimpio}";
+// 4. REGISTRO EN LA GALERÍA (imagenes/{usuario}/lista)
+$urlFinal = "https://cdn.jsdelivr.net/gh/{$githubRepo}/{$githubPath}";
+$urlStoreImg = "https://firestore.googleapis.com/v1/projects/{$proyectoID}/databases/(default)/documents/imagenes/" . urlencode($usuarioID) . "/lista";
 
-// 4. VINCULAR EN FIRESTORE: imagenes / {usuarioID} / {documentoAuto}
-$urlStore = "https://firestore.googleapis.com/v1/projects/{$proyectoID}/databases/(default)/documents/imagenes/" . urlencode($usuarioID) . "/archivos";
-
-$registroFirestore = [
+$registro = [
     'fields' => [
-        'url' => ['stringValue' => $finalUrl],
+        'url' => ['stringValue' => $urlFinal],
         'nombre' => ['stringValue' => $nombreArchivo],
-        'apiKeyUsed' => ['stringValue' => $apiKey],
         'fecha' => ['timestampValue' => gmdate("Y-m-d\TH:i:s\Z")]
     ]
 ];
 
-$ch = curl_init($urlStore);
-curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($registroFirestore));
+$ch = curl_init($urlStoreImg);
+curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($registro));
 curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 curl_exec($ch);
 curl_close($ch);
 
-// 5. RESPUESTA EXITOSA AL JS
-echo json_encode([
-    "success" => true,
-    "url" => $finalUrl
-]);
+echo json_encode(["success" => true, "url" => $urlFinal]);
