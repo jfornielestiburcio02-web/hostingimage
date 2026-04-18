@@ -18,6 +18,14 @@
       "status": 404
     },
     {
+      "src": "/en/index.php",
+      "status": 404
+    },
+    {
+      "src": "/en/",
+      "dest": "/api/en/index.php"
+    },
+    {
       "src": "/(.*)\\.php",
       "dest": "/api/$1.php"
     },
