@@ -6,43 +6,46 @@ header("Content-Type: application/json");
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') exit;
 
-// --- CONFIGURACIÓN ---
-$githubToken = "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";
-$githubRepo  = "jfornielestiburcio02-web/hostingimage"; 
+// --- CONFIGURACIÓN DESDE VERCEL ---
+// getenv lee la variable que configuraste en el panel de Vercel
+$githubToken = getenv('CREA_IMAGEN_HTML'); 
+$githubRepo  = "jfornielestiburcio02-web/hostingimage"; // Cambia esto por tu repo real
 $proyectoID  = "hostingimage1";
 
-// 1. CAPTURA
+// 1. CAPTURA DE DATOS
 $apiKey    = $_POST['apiKey'] ?? '';
-$usuarioID = $_POST['usuarioID'] ?? ''; // El cliente debe enviar su ID de usuario
+$usuarioID = $_POST['usuarioID'] ?? ''; 
 $path      = $_POST['path'] ?? '/imagenes/default/';
 $image     = $_FILES['image'] ?? null;
 
-if (empty($apiKey) || empty($usuarioID) || !$image) {
-    echo json_encode(["success" => false, "error" => "Faltan datos (apiKey, usuarioID o imagen)"]);
+if (empty($githubToken)) {
+    echo json_encode(["success" => false, "error" => "Error interno: Token no configurado en Vercel."]);
     exit;
 }
 
-// 2. VALIDACIÓN DIRECTA EN FIRESTORE
-// Buscamos el documento del usuario directamente: apis/{usuarioID}
+if (empty($apiKey) || empty($usuarioID) || !$image) {
+    echo json_encode(["success" => false, "error" => "Faltan datos en la subida."]);
+    exit;
+}
+
+// 2. VALIDACIÓN EN FIRESTORE (apis/{usuarioID})
 $urlFirestore = "https://firestore.googleapis.com/v1/projects/{$proyectoID}/databases/(default)/documents/apis/" . urlencode($usuarioID);
 
 $ch = curl_init($urlFirestore);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-$response = curl_exec($ch);
-$data = json_decode($response, true);
+$data = json_decode(curl_exec($ch), true);
 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 curl_close($ch);
 
-// Comprobamos si el documento existe y si la clave coincide
 $apiGuardada = $data['fields']['api']['stringValue'] ?? '';
 
 if ($httpCode !== 200 || $apiGuardada !== $apiKey) {
-    echo json_encode(["success" => false, "error" => "API Key no válida para este usuario."]);
+    echo json_encode(["success" => false, "error" => "API Key no válida."]);
     exit;
 }
 
-// 3. SUBIDA A GITHUB
+// 3. SUBIDA A GITHUB (REPOSITORIO PRIVADO)
 $nombreArchivo = time() . "_" . str_replace(' ', '_', $image['name']);
 $githubPath = trim($path, '/') . "/" . $nombreArchivo;
 $base64Content = base64_encode(file_get_contents($image['tmp_name']));
@@ -68,17 +71,21 @@ $httpCodeGH = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 curl_close($ch);
 
 if ($httpCodeGH !== 201) {
-    echo json_encode(["success" => false, "error" => "Error en GitHub"]);
+    echo json_encode(["success" => false, "error" => "GitHub rechazo la subida. Revisa permisos del Token."]);
     exit;
 }
 
-// 4. REGISTRO EN LA GALERÍA (imagenes/{usuario}/lista)
-$urlFinal = "https://cdn.jsdelivr.net/gh/{$githubRepo}/{$githubPath}";
-$urlStoreImg = "https://firestore.googleapis.com/v1/projects/{$proyectoID}/databases/(default)/documents/imagenes/" . urlencode($usuarioID) . "/lista";
+// 4. LA URL FINAL
+// IMPORTANTE: Al ser repo PRIVADO, no puedes usar jsDelivr.
+// Si quieres que la imagen se vea, el repo debería ser PÚBLICO.
+// Si lo mantienes PRIVADO, esta URL solo funcionará si tienes activado GitHub Pages (Público).
+$finalUrl = "https://raw.githubusercontent.com/{$githubRepo}/main/{$githubPath}";
 
+// 5. REGISTRO EN FIRESTORE
+$urlStoreImg = "https://firestore.googleapis.com/v1/projects/{$proyectoID}/databases/(default)/documents/imagenes/" . urlencode($usuarioID) . "/lista";
 $registro = [
     'fields' => [
-        'url' => ['stringValue' => $urlFinal],
+        'url' => ['stringValue' => $finalUrl],
         'nombre' => ['stringValue' => $nombreArchivo],
         'fecha' => ['timestampValue' => gmdate("Y-m-d\TH:i:s\Z")]
     ]
@@ -92,4 +99,4 @@ curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 curl_exec($ch);
 curl_close($ch);
 
-echo json_encode(["success" => true, "url" => $urlFinal]);
+echo json_encode(["success" => true, "url" => $finalUrl]);
