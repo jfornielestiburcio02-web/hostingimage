@@ -8,7 +8,7 @@ $proyectoID = "hostingimage1";
 if (isset($_GET['phpsession'])) {
     $_SESSION['PHPSESS_MOTOR'] = $_GET['phpsession'];
     
-    // Limpiar la URL para que no se vea el token
+    // Limpiar la URL para que no se vea el token en la barra de direcciones
     $PARAMS = $_GET;
     unset($PARAMS['phpsession']);
     $NUEVA_URL = $_SERVER['PHP_SELF'] . (count($PARAMS) ? '?' . http_build_query($PARAMS) : '');
@@ -23,8 +23,9 @@ if (!isset($_SESSION['PHPSESS_MOTOR'])) {
     exit();
 }
 
-// 3. VALIDACIÓN REAL EN FIRESTORE (Buscando el campo phpsession)
-$tokenAVerificar = $_SESSION['PHPSESS_MOTOR'];
+$tokenActual = $_SESSION['PHPSESS_MOTOR'];
+
+// 3. VALIDACIÓN REAL EN FIRESTORE (POST runQuery)
 $urlFirestore = "https://firestore.googleapis.com/v1/projects/{$proyectoID}/databases/(default)/documents:runQuery";
 
 $query = [
@@ -34,7 +35,7 @@ $query = [
             'fieldFilter' => [
                 'field' => ['fieldPath' => 'phpsession'],
                 'op' => 'EQUAL',
-                'value' => ['stringValue' => $tokenAVerificar]
+                'value' => ['stringValue' => $tokenActual]
             ]
         ],
         'limit' => 1
@@ -56,13 +57,13 @@ curl_close($ch);
 
 $resData = json_decode($response, true);
 
-// SI EL TOKEN NO EXISTE EN NINGÚN USUARIO DE FIRESTORE = FUERA
+// VALIDACIÓN: Si no hay documento con ese token, fuera
 if ($httpCode !== 200 || empty($resData) || !isset($resData[0]['document'])) {
     session_destroy();
-    exit("ACCESO DENEGADO: El token no existe en Firestore.");
+    exit("ACCESO DENEGADO: Token no encontrado en Firestore.");
 }
 
-// 4. SI LLEGA AQUÍ, TODO ESTÁ BIEN. MOSTRAR INTERFAZ DIRECTA
+// 4. INTERFAZ INTEGRADA SIN IFRAMES
 ?>
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 TRANSITIONAL//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <HTML>
@@ -73,16 +74,14 @@ if ($httpCode !== 200 || empty($resData) || !isset($resData[0]['document'])) {
         BODY { MARGIN: 0; PADDING: 0; FONT-FAMILY: VERDANA; BACKGROUND-COLOR: #FFF; COLOR: #333; }
         .MASTER-CONTAINER { DISPLAY: FLEX; MIN-HEIGHT: 100VH; }
         
-        /* SIDEBAR */
         .SIDEBAR { 
-            WIDTH: 260PX; 
+            WIDTH: 280PX; 
             BACKGROUND-COLOR: #F8F8F8; 
             BORDER-RIGHT: 2PX SOLID #333; 
             PADDING: 30PX 20PX;
             BOX-SIZING: BORDER-BOX;
         }
         
-        /* CONTENIDO PRINCIPAL */
         .MAIN-CONTENT { 
             FLEX-GROW: 1; 
             PADDING: 50PX; 
@@ -99,11 +98,12 @@ if ($httpCode !== 200 || empty($resData) || !isset($resData[0]['document'])) {
             FONT-WEIGHT: BOLD; 
             TEXT-ALIGN: CENTER;
             BORDER-RADIUS: 4PX;
+            FONT-SIZE: 13PX;
         }
         .BTN:HOVER { BACKGROUND-COLOR: #000; }
         
         H1 { MARGIN-TOP: 0; FONT-SIZE: 22PX; }
-        H3 { MARGIN-TOP: 0; FONT-SIZE: 16PX; COLOR: #666; }
+        H3 { MARGIN-TOP: 0; FONT-SIZE: 16PX; COLOR: #666; TEXT-TRANSFORM: UPPERCASE; }
         HR { BORDER: 0; BORDER-TOP: 1PX SOLID #DDD; MARGIN: 20PX 0; }
     </STYLE>
 </HEAD>
@@ -112,19 +112,19 @@ if ($httpCode !== 200 || empty($resData) || !isset($resData[0]['document'])) {
 <DIV CLASS="MASTER-CONTAINER">
     
     <DIV CLASS="SIDEBAR">
-        <H3>GESTIÓN</H3>
+        <H3>Menú de Gestión</H3>
         <HR>
-        <A HREF="conseguirapi.php" CLASS="BTN">Conseguir API</A>
-        <A HREF="subidaManual.php" CLASS="BTN">Subir manualmente</A>
+        <A HREF="conseguirapi.php?phpsession=<?php echo urlencode($tokenActual); ?>" CLASS="BTN">Conseguir API</A>
+        <A HREF="subidaManual.php?phpsession=<?php echo urlencode($tokenActual); ?>" CLASS="BTN">Subir manualmente</A>
         <HR>
-        <A HREF="logout.php" STYLE="COLOR: RED; TEXT-DECORATION: NONE; FONT-SIZE: 12PX;">Cerrar Sesión</A>
+        <A HREF="logout.php" STYLE="COLOR: #999; TEXT-DECORATION: NONE; FONT-SIZE: 11PX;">Cerrar Sesión Segura</A>
     </DIV>
     
     <DIV CLASS="MAIN-CONTENT">
-        <H1>BIENVENIDO AL PANEL PRINCIPAL</H1>
-        <P>Has accedido correctamente. La sesión ha sido validada mediante el token <strong>phpsession</strong> en Firestore.</P>
-        <DIV STYLE="BACKGROUND: #F0F0F0; PADDING: 20PX; BORDER: 1PX DASHED #999;">
-            <P>Selecciona una opción del menú lateral para comenzar a trabajar.</P>
+        <H1>PANEL DE CONTROL</H1>
+        <P>Estado: <SPAN STYLE="COLOR: GREEN; FONT-WEIGHT: BOLD;">Sesión Validada en Firestore</SPAN></P>
+        <DIV STYLE="MARGIN-TOP: 30PX; PADDING: 20PX; BORDER: 1PX SOLID #EEE; BACKGROUND: #FAFAFA;">
+            <P>Bienvenido al área de gestión empresarial. Utiliza el menú de la izquierda para navegar.</P>
         </DIV>
     </DIV>
 
