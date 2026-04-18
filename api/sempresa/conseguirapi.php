@@ -44,12 +44,13 @@ if (empty($resUser) || !isset($resUser[0]['document'])) {
 $pathPartes = explode('/', $resUser[0]['document']['name']);
 $idUsuarioDB = end($pathPartes);
 
-// 3. LÓGICA DE CREACIÓN DE API (POST A SÍ MISMO)
+// 3. LÓGICA DE CREACIÓN/ACTUALIZACIÓN DE API
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nombreEmpresa'])) {
-    $nombreEmp = preg_replace('/[^A-Za-z0-9_\-]/', '', $_POST['nombreEmpresa']); // Limpiar para carpetas
+    $nombreEmp = preg_replace('/[^A-Za-z0-9_\-]/', '', $_POST['nombreEmpresa']); 
     $nuevaApiClave = "HI-" . strtoupper(bin2hex(random_bytes(8))); 
 
-    $urlCreate = "https://firestore.googleapis.com/v1/projects/{$proyectoID}/databases/(default)/documents/apis/" . urlencode($idUsuarioDB) . "/claves";
+    // URL para crear/reemplazar el documento específico del usuario: apis/{idUsuarioDB}
+    $urlUpdate = "https://firestore.googleapis.com/v1/projects/{$proyectoID}/databases/(default)/documents/apis/" . urlencode($idUsuarioDB);
     
     $newData = [
         'fields' => [
@@ -58,8 +59,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nombreEmpresa'])) {
         ]
     ];
 
-    $ch = curl_init($urlCreate);
-    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+    $ch = curl_init($urlUpdate);
+    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "PATCH"); // PATCH crea o actualiza
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($newData));
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
@@ -71,14 +72,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nombreEmpresa'])) {
     exit();
 }
 
-// 4. OBTENER APIS EXISTENTES
-$urlGetApis = "https://firestore.googleapis.com/v1/projects/{$proyectoID}/databases/(default)/documents/apis/" . urlencode($idUsuarioDB) . "/claves";
-$ch = curl_init($urlGetApis);
+// 4. OBTENER LA API DEL USUARIO (Documento único)
+$urlGetApi = "https://firestore.googleapis.com/v1/projects/{$proyectoID}/databases/(default)/documents/apis/" . urlencode($idUsuarioDB);
+$ch = curl_init($urlGetApi);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-$apisData = json_decode(curl_exec($ch), true);
+$apiDoc = json_decode(curl_exec($ch), true);
 curl_close($ch);
-$listaApis = $apisData['documents'] ?? [];
+
+// Adaptamos la lista para que el resto del HTML funcione (aunque ahora sea solo uno)
+$existeApi = isset($apiDoc['fields']);
 ?>
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 TRANSITIONAL//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <HTML>
@@ -88,21 +91,14 @@ $listaApis = $apisData['documents'] ?? [];
     <STYLE TYPE="TEXT/CSS">
         BODY { MARGIN: 0; PADDING: 0; FONT-FAMILY: VERDANA; BACKGROUND-COLOR: #FFF; }
         .MASTER-CONTAINER { DISPLAY: FLEX; MIN-HEIGHT: 100VH; }
-        
         .SIDEBAR { WIDTH: 280PX; BACKGROUND-COLOR: #F8F8F8; BORDER-RIGHT: 2PX SOLID #333; PADDING: 30PX 20PX; BOX-SIZING: BORDER-BOX; }
         .BTN-NAV { DISPLAY: BLOCK; MARGIN-BOTTOM: 15PX; PADDING: 15PX; BACKGROUND-COLOR: #333; COLOR: #FFF; TEXT-DECORATION: NONE; FONT-WEIGHT: BOLD; TEXT-ALIGN: CENTER; BORDER-RADIUS: 4PX; FONT-SIZE: 13PX; }
-        
         .MAIN-CONTENT { FLEX-GROW: 1; PADDING: 50PX; BOX-SIZING: BORDER-BOX; }
         .UTILIDADES { BACKGROUND: #F4F4F4; PADDING: 15PX; BORDER-LEFT: 4PX SOLID #333; MARGIN: 20PX 0; }
-        
         .CODE-BLOCK { BACKGROUND: #222; COLOR: #ADFF2F; PADDING: 15PX; FONT-FAMILY: MONOSPACE; FONT-SIZE: 12PX; MARGIN-TOP: 10PX; BORDER-RADIUS: 5PX; OVERFLOW-X: AUTO; }
-        .API-ITEM { BORDER: 1PX SOLID #DDD; PADDING: 15PX; MARGIN-TOP: 15PX; BORDER-RADIUS: 4PX; }
-        
+        .API-ITEM { BORDER: 1PX SOLID #DDD; PADDING: 15PX; MARGIN-TOP: 15PX; BORDER-RADIUS: 4PX; BACKGROUND-COLOR: #FAFAFA; }
         .INPUT-TXT { PADDING: 10PX; WIDTH: 250PX; FONT-FAMILY: VERDANA; }
         .BTN-NUEVA { PADDING: 10PX 20PX; BACKGROUND: #333; COLOR: #FFF; BORDER: NONE; CURSOR: POINTER; FONT-WEIGHT: BOLD; }
-        
-        .DUDAS { MARGIN-TOP: 60PX; FONT-SIZE: 10PX; TEXT-ALIGN: CENTER; }
-        .DUDAS A { COLOR: #999; TEXT-DECORATION: NONE; }
         .VER-BTN { CURSOR: POINTER; COLOR: #007BFF; TEXT-DECORATION: UNDERLINE; FONT-SIZE: 11PX; }
     </STYLE>
     <SCRIPT TYPE="TEXT/JAVASCRIPT">
@@ -128,45 +124,42 @@ $listaApis = $apisData['documents'] ?? [];
         <DIV CLASS="UTILIDADES">
             <STRONG>Utilidades:</STRONG>
             <UL>
-                <LI>Puedes subir imágenes desde tu web mediante nuestra SDK.</LI>
-                <LI>Las imágenes se guardan automáticamente en: <I>/imagenes/{nombreEmpresa}/imagen.png</I></LI>
+                <LI>Solo puedes tener **una API activa** por cuenta.</LI>
+                <LI>Al crear una nueva, la anterior dejará de funcionar.</LI>
             </UL>
         </DIV>
 
-        <H2 STYLE="FONT-SIZE: 18PX; BORDER-BOTTOM: 2PX SOLID #333;">APIS PERTENECIENTES</H2>
-        <?php if (empty($listaApis)): ?>
-            <P STYLE="COLOR:RED; FONT-WEIGHT:BOLD; MARGIN-TOP:20PX;">Pulse para crear una api</P>
-        <?php else: ?>
-            <?php foreach ($listaApis as $i => $doc): 
-                $val = $doc['fields']['api']['stringValue'] ?? '';
-                $nom = $doc['fields']['nombreEmpresa']['stringValue'] ?? 'empresa_desconocida';
-                $idBlock = "code_".$i;
-            ?>
-                <DIV CLASS="API-ITEM">
-                    <STRONG>Empresa: <?php echo htmlspecialchars($nom); ?></STRONG> | 
-                    <SPAN CLASS="VER-BTN" ONCLICK="toggleCode('<?php echo $idBlock; ?>')">Ver Configuración</SPAN>
-                    
-                    <DIV ID="<?php echo $idBlock; ?>" CLASS="CODE-BLOCK" STYLE="DISPLAY:NONE;">
-                        const hostingImageConfig = {<BR>
-                        &nbsp;&nbsp;apiKey: "<?php echo htmlspecialchars($val); ?>",<BR>
-                        &nbsp;&nbsp;storagePath: "/imagenes/<?php echo htmlspecialchars($nom); ?>/"<BR>
-                        };
-                    </DIV>
+        <H2 STYLE="FONT-SIZE: 18PX; BORDER-BOTTOM: 2PX SOLID #333;">TU CONFIGURACIÓN ACTUAL</H2>
+        
+        <?php if (!$existeApi): ?>
+            <P STYLE="COLOR:RED; FONT-WEIGHT:BOLD; MARGIN-TOP:20PX;">No tienes ninguna API generada todavía.</P>
+        <?php else: 
+            $val = $apiDoc['fields']['api']['stringValue'] ?? '';
+            $nom = $apiDoc['fields']['nombreEmpresa']['stringValue'] ?? 'empresa';
+        ?>
+            <DIV CLASS="API-ITEM">
+                <STRONG>Empresa:</STRONG> <?php echo htmlspecialchars($nom); ?><BR>
+                <STRONG>API Key:</STRONG> <?php echo htmlspecialchars($val); ?> 
+                <BR><BR>
+                <SPAN CLASS="VER-BTN" ONCLICK="toggleCode('bloqueUnico')">Mostrar código para tu Web</SPAN>
+                
+                <DIV ID="bloqueUnico" CLASS="CODE-BLOCK" STYLE="DISPLAY:NONE;">
+                    const hostingImageConfig = {<BR>
+                    &nbsp;&nbsp;apiKey: "<?php echo htmlspecialchars($val); ?>",<BR>
+                    &nbsp;&nbsp;usuarioID: "<?php echo htmlspecialchars($idUsuarioDB); ?>",<BR>
+                    &nbsp;&nbsp;storagePath: "/imagenes/<?php echo htmlspecialchars($nom); ?>/"<BR>
+                    };
                 </DIV>
-            <?php endforeach; ?>
+            </DIV>
         <?php endif; ?>
 
-        <H2 STYLE="FONT-SIZE: 18PX; BORDER-BOTTOM: 2PX SOLID #333; MARGIN-TOP:40PX;">CREAR NUEVA</H2>
+        <H2 STYLE="FONT-SIZE: 18PX; BORDER-BOTTOM: 2PX SOLID #333; MARGIN-TOP:40PX;">GENERAR / REEMPLAZAR API</H2>
         <DIV STYLE="MARGIN-TOP: 20PX; PADDING: 20PX; BORDER: 1PX SOLID #CCC;">
             <FORM METHOD="POST">
-                <P>Nombre de la empresa (se usará para la carpeta de imágenes):</P>
-                <INPUT TYPE="TEXT" NAME="nombreEmpresa" CLASS="INPUT-TXT" REQUIRED PLACEHOLDER="nombre_empresa">
-                <BUTTON TYPE="SUBMIT" CLASS="BTN-NUEVA">Nueva</BUTTON>
+                <P>Nombre de la empresa:</P>
+                <INPUT TYPE="TEXT" NAME="nombreEmpresa" CLASS="INPUT-TXT" REQUIRED PLACEHOLDER="mi_empresa_sl">
+                <BUTTON TYPE="SUBMIT" CLASS="BTN-NUEVA"><?php echo $existeApi ? 'Regenerar API' : 'Crear API'; ?></BUTTON>
             </FORM>
-        </DIV>
-
-        <DIV CLASS="DUDAS">
-            <A HREF="#">dudas y ayuda</A>
         </DIV>
     </DIV>
 </DIV>
