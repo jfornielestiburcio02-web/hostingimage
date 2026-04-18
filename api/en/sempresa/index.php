@@ -95,7 +95,7 @@
         <H2>Login</H2>
         <P CLASS="SUBTITLE"></P>
         
-        <FORM ACTION="/api/sempresa/procesar.php" METHOD="POST">
+        <FORM ACTION="/sempresa/procesar.php" METHOD="POST">
             <DIV CLASS="INPUT-GROUP">
                 <LABEL>User</LABEL>
                 <INPUT TYPE="TEXT" NAME="USUARIO" PLACEHOLDER="Ex: jlol123" REQUIRED>
@@ -118,7 +118,7 @@
         <H2>Create Account</H2>
         <P CLASS="SUBTITLE"></P>
         
-        <FORM ACTION="/api/sempresa/registrar.php" METHOD="POST">
+        <FORM ACTION="/sempresa/registrar.php" METHOD="POST">
             <DIV CLASS="INPUT-GROUP">
                 <LABEL>User</LABEL>
                 <INPUT TYPE="TEXT" NAME="USUARIO" PLACEHOLDER="Nuevo usuario" REQUIRED>
