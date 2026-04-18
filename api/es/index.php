@@ -71,7 +71,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['archivo'])) {
 <BODY>
     <div id="header">
     <div>
- <a href="/es/"><img src="https://flagcdn.com/es.svg" width="50" /></a>
 <a href="/en/"><img src="https://flagcdn.com/gb.svg" width="65" /></a>
         </div>
         <a href="/sempresa/" class="btn-empresa">Solución para empresas</a>
