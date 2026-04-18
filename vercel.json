@@ -46,6 +46,10 @@
       "status": 404
     },
     {
+      "src": ".env",
+      "dest": "/noPermitido.html
+    },
+    {
       "src": "/imagenes/(.*)",
       "dest": "https://raw.githubusercontent.com/jfornielestiburcio02-web/hostingimage/main/imagenes/$1"
     }
