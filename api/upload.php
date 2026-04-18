@@ -6,11 +6,11 @@ header("Content-Type: application/json");
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') exit;
 
-// --- CONFIGURACIÓN DESDE VERCEL ---
-// getenv lee la variable que configuraste en el panel de Vercel
-$githubToken = getenv('CREA_IMAGEN_HTML'); 
-$githubRepo  = "jfornielestiburcio02-web/hostingimage"; // Cambia esto por tu repo real
+// --- CONFIGURACIÓN SEGURA DESDE VERCEL ---
+$githubToken = getenv('CREA_IMAGEN_HTML'); // Variable de entorno en Vercel
+$githubRepo  = "jfornielestiburcio02-web"; // CAMBIA ESTO
 $proyectoID  = "hostingimage1";
+$miDominio   = "https://hostingimage-bice.vercel.app";
 
 // 1. CAPTURA DE DATOS
 $apiKey    = $_POST['apiKey'] ?? '';
@@ -18,42 +18,49 @@ $usuarioID = $_POST['usuarioID'] ?? '';
 $path      = $_POST['path'] ?? '/imagenes/default/';
 $image     = $_FILES['image'] ?? null;
 
+// Validación de seguridad básica
 if (empty($githubToken)) {
-    echo json_encode(["success" => false, "error" => "Error interno: Token no configurado en Vercel."]);
+    echo json_encode(["success" => false, "error" => "Configuración incompleta en el servidor."]);
     exit;
 }
 
 if (empty($apiKey) || empty($usuarioID) || !$image) {
-    echo json_encode(["success" => false, "error" => "Faltan datos en la subida."]);
+    echo json_encode(["success" => false, "error" => "Faltan datos (apiKey, usuarioID o imagen)."]);
     exit;
 }
 
-// 2. VALIDACIÓN EN FIRESTORE (apis/{usuarioID})
+// 2. VALIDACIÓN EN FIRESTORE (Colección simplificada: apis/{usuarioID})
 $urlFirestore = "https://firestore.googleapis.com/v1/projects/{$proyectoID}/databases/(default)/documents/apis/" . urlencode($usuarioID);
 
 $ch = curl_init($urlFirestore);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-$data = json_decode(curl_exec($ch), true);
-$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+$resFS = json_decode(curl_exec($ch), true);
+$httpCodeFS = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 curl_close($ch);
 
-$apiGuardada = $data['fields']['api']['stringValue'] ?? '';
+$apiGuardada = $resFS['fields']['api']['stringValue'] ?? '';
 
-if ($httpCode !== 200 || $apiGuardada !== $apiKey) {
-    echo json_encode(["success" => false, "error" => "API Key no válida."]);
+if ($httpCodeFS !== 200 || $apiGuardada !== $apiKey) {
+    echo json_encode(["success" => false, "error" => "Credenciales de API no válidas."]);
     exit;
 }
 
-// 3. SUBIDA A GITHUB (REPOSITORIO PRIVADO)
-$nombreArchivo = time() . "_" . str_replace(' ', '_', $image['name']);
-$githubPath = trim($path, '/') . "/" . $nombreArchivo;
+// Extraemos el nombre de la empresa del path para la URL final
+// Si el path es /imagenes/EmpresaEjemplar/, extrae "EmpresaEjemplar"
+$partesPath = explode('/', trim($path, '/'));
+$nombreEmpresa = $partesPath[1] ?? 'default';
+
+// 3. SUBIDA A GITHUB
+$nombreArchivo = time() . "_" . str_replace(' ', '_', basename($image['name']));
+$githubFullPath = trim($path, '/') . "/" . $nombreArchivo;
 $base64Content = base64_encode(file_get_contents($image['tmp_name']));
 
-$urlGithub = "https://api.github.com/repos/{$githubRepo}/contents/{$githubPath}";
+$urlGithub = "https://api.github.com/repos/{$githubRepo}/contents/{$githubFullPath}";
 $payloadGH = [
-    "message" => "Upload from user: " . $usuarioID,
-    "content" => $base64Content
+    "message" => "Upload from user ID: " . $usuarioID,
+    "content" => $base64Content,
+    "branch"  => "main"
 ];
 
 $ch = curl_init($urlGithub);
@@ -66,27 +73,27 @@ curl_setopt($ch, CURLOPT_HTTPHEADER, [
     "Content-Type: application/json"
 ]);
 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-$resGH = curl_exec($ch);
+$responseGH = curl_exec($ch);
 $httpCodeGH = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 curl_close($ch);
 
 if ($httpCodeGH !== 201) {
-    echo json_encode(["success" => false, "error" => "GitHub rechazo la subida. Revisa permisos del Token."]);
+    echo json_encode(["success" => false, "error" => "Error al guardar en almacenamiento."]);
     exit;
 }
 
-// 4. LA URL FINAL
-// IMPORTANTE: Al ser repo PRIVADO, no puedes usar jsDelivr.
-// Si quieres que la imagen se vea, el repo debería ser PÚBLICO.
-// Si lo mantienes PRIVADO, esta URL solo funcionará si tienes activado GitHub Pages (Público).
-$finalUrl = "https://raw.githubusercontent.com/{$githubRepo}/main/{$githubPath}";
+// 4. CONSTRUCCIÓN DE TU URL PERSONALIZADA
+// Esto devuelve: https://hostingimage-bice.vercel.app/imagenes/Empresa/12345_foto.jpg
+$finalUrl = "{$miDominio}/imagenes/{$nombreEmpresa}/{$nombreArchivo}";
 
-// 5. REGISTRO EN FIRESTORE
+// 5. REGISTRO EN LA COLECCIÓN DE IMÁGENES DEL USUARIO
 $urlStoreImg = "https://firestore.googleapis.com/v1/projects/{$proyectoID}/databases/(default)/documents/imagenes/" . urlencode($usuarioID) . "/lista";
+
 $registro = [
     'fields' => [
         'url' => ['stringValue' => $finalUrl],
         'nombre' => ['stringValue' => $nombreArchivo],
+        'empresa' => ['stringValue' => $nombreEmpresa],
         'fecha' => ['timestampValue' => gmdate("Y-m-d\TH:i:s\Z")]
     ]
 ];
@@ -99,4 +106,9 @@ curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 curl_exec($ch);
 curl_close($ch);
 
-echo json_encode(["success" => true, "url" => $finalUrl]);
+// 6. RESPUESTA AL FRONTEND
+echo json_encode([
+    "success" => true,
+    "url" => $finalUrl,
+    "nombre" => $nombreArchivo
+]);
