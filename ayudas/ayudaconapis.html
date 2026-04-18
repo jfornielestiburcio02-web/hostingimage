@@ -1,1 +1,147 @@
+<?php
+session_start();
+// (Opcional) Puedes añadir aquí la misma validación de sesión de los otros archivos si quieres que sea privado.
+$tokenActual = $_SESSION['PHPSESS_MOTOR'] ?? '';
+?>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 TRANSITIONAL//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+    <TITLE>Hostingimage</TITLE>
+    <META HTTP-EQUIV="CONTENT-TYPE" CONTENT="TEXT/HTML; CHARSET=UTF-8">
+    <STYLE TYPE="TEXT/CSS">
+        BODY { MARGIN: 0; PADDING: 0; FONT-FAMILY: VERDANA; BACKGROUND-COLOR: #FFF; COLOR: #333; }
+        .MASTER-CONTAINER { DISPLAY: FLEX; MIN-HEIGHT: 100VH; }
+        
+        .SIDEBAR { 
+            WIDTH: 280PX; 
+            BACKGROUND-COLOR: #F8F8F8; 
+            BORDER-RIGHT: 2PX SOLID #333; 
+            PADDING: 30PX 20PX;
+            BOX-SIZING: BORDER-BOX;
+        }
+        
+        .MAIN-CONTENT { 
+            FLEX-GROW: 1; 
+            PADDING: 50PX; 
+            BOX-SIZING: BORDER-BOX;
+        }
 
+        .BTN { 
+            DISPLAY: BLOCK; 
+            MARGIN-BOTTOM: 15PX; 
+            PADDING: 15PX; 
+            BACKGROUND-COLOR: #333; 
+            COLOR: #FFF; 
+            TEXT-DECORATION: NONE; 
+            FONT-WEIGHT: BOLD; 
+            TEXT-ALIGN: CENTER;
+            BORDER-RADIUS: 4PX;
+            FONT-SIZE: 13PX;
+        }
+        .BTN:HOVER { BACKGROUND-COLOR: #000; }
+        
+        .CODE-BLOCK {
+            BACKGROUND-COLOR: #272822;
+            COLOR: #F8F8F2;
+            PADDING: 20PX;
+            BORDER-RADIUS: 5PX;
+            OVERFLOW-X: AUTO;
+            FONT-FAMILY: MONACO, MONOSPACE;
+            FONT-SIZE: 12PX;
+            LINE-HEIGHT: 1.5;
+            MARGIN: 20PX 0;
+        }
+
+        .INFO-TABLE {
+            WIDTH: 100%;
+            BORDER-COLLAPSE: COLLAPSE;
+            MARGIN: 20PX 0;
+        }
+        .INFO-TABLE TH, .INFO-TABLE TD {
+            TEXT-ALIGN: LEFT;
+            PADDING: 12PX;
+            BORDER-BOTTOM: 1PX SOLID #EEE;
+        }
+        .INFO-TABLE TH { BACKGROUND: #F4F4F4; FONT-SIZE: 12PX; }
+
+        H1 { MARGIN-TOP: 0; FONT-SIZE: 26PX; }
+        H3 { MARGIN-TOP: 0; FONT-SIZE: 16PX; COLOR: #666; TEXT-TRANSFORM: UPPERCASE; }
+        HR { BORDER: 0; BORDER-TOP: 1PX SOLID #DDD; MARGIN: 20PX 0; }
+    </STYLE>
+</HEAD>
+<BODY>
+
+<DIV CLASS="MASTER-CONTAINER">
+    
+    <DIV CLASS="SIDEBAR">
+        <H3>Guías de Ayuda</H3>
+        <HR>
+        <A HREF="ayuda.php" CLASS="BTN">Guía de Errores</A>
+        <A HREF="conectar_apis.php" CLASS="BTN">Como conectar apis</A>
+        <HR>
+        <A HREF="subidaManual.php" STYLE="COLOR: #333; TEXT-DECORATION: NONE; FONT-SIZE: 12PX;">&larr; Volver al Panel</A>
+    </DIV>
+
+    <DIV CLASS="MAIN-CONTENT">
+        <H1>Guía: Cómo conectar la API</H1>
+        <P>Para integrar nuestro servicio de hosting en tu propia web o aplicación, utiliza el siguiente ejemplo base. Solo tienes que sustituir los valores de configuración por los tuyos.</P>
+
+        <H3>Parámetros de Configuración</H3>
+        <TABLE CLASS="INFO-TABLE">
+            <TR>
+                <TH>PARÁMETRO</TH>
+                <TH>DESCRIPCIÓN</TH>
+            </TR>
+            <TR>
+                <TD><STRONG>apiKey</STRONG></TD>
+                <TD>Tu clave secreta HI-XXXX (la encuentras en "Conseguir API").</TD>
+            </TR>
+            <TR>
+                <TD><STRONG>usuarioID</STRONG></TD>
+                <TD>Tu identificador único de sistema.</TD>
+            </TR>
+            <TR>
+                <TD><STRONG>path</STRONG></TD>
+                <TD>Ruta donde se guardará en el servidor (ej: /imagenes/cliente1/).</TD>
+            </TR>
+        </TABLE>
+
+        <H3>Código de ejemplo (HTML + JavaScript)</H3>
+        <DIV CLASS="CODE-BLOCK">
+            <PRE>
+&lt;!-- Copia este código en tu archivo HTML --&gt;
+&lt;script&gt;
+  const formData = new FormData();
+  formData.append('image', archivoInput.files[0]);
+  formData.append('apiKey', 'TU_API_KEY');
+  formData.append('usuarioID', 'TU_USUARIO_ID');
+  formData.append('path', '/imagenes/mi-empresa/');
+
+  fetch('https://hostingimage-bice.vercel.app/upload.php', {
+      method: 'POST',
+      body: formData
+  })
+  .then(res => res.json())
+  .then(data => {
+      if(data.success) {
+          console.log("URL de la imagen: " + data.url);
+          document.getElementById('mi-img').src = data.url;
+      }
+  });
+&lt;/script&gt;
+            </PRE>
+        </DIV>
+
+        <H2>¿Cómo funciona?</H2>
+        <OL>
+            <LI>El usuario selecciona una imagen en tu web.</LI>
+            <LI>Tu código envía la imagen junto a tu <STRONG>API Key</STRONG> a nuestro servidor.</LI>
+            <LI>Nosotros procesamos la subida y te devolvemos una <STRONG>URL directa</STRONG>.</LI>
+            <LI>Esa URL es la que debes guardar en tu base de datos para mostrar la imagen siempre.</LI>
+        </OL>
+    </DIV>
+
+</DIV>
+
+</BODY>
+</HTML>
