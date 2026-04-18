@@ -123,8 +123,8 @@ $imagenes = $resLista['documents'] ?? [];
     <DIV CLASS="SIDEBAR">
         <H3>Menú de Gestión</H3>
         <HR>
-        <A HREF="conseguirapi.php" CLASS="BTN">Conseguir API</A>
-        <A HREF="subidaManual.php" CLASS="BTN">Subir manualmente</A>
+        <A HREF="conseguirapi.php?phpsession=<?php echo urlencode($tokenActual); ?>" CLASS="BTN">Conseguir API</A>
+        <A HREF="subidaManual.php?phpsession=<?php echo urlencode($tokenActual); ?>" CLASS="BTN">Subir manualmente</A>
         <HR>
         <A HREF="logout.php" STYLE="COLOR: #999; TEXT-DECORATION: NONE; FONT-SIZE: 11PX;">Cerrar Sesión Segura</A>
     </DIV>
