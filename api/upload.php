@@ -8,7 +8,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') exit;
 
 // --- CONFIGURACIÓN SEGURA DESDE VERCEL ---
 $githubToken = getenv('CREA_IMAGEN_HTML'); // Variable de entorno en Vercel
-$githubRepo  = "jfornielestiburcio02-web"; // CAMBIA ESTO
+$githubRepo  = "jfornielestiburcio02-web/hostingimage"; // CAMBIA ESTO
 $proyectoID  = "hostingimage1";
 $miDominio   = "https://hostingimage-bice.vercel.app";
 
