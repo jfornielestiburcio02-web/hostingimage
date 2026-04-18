@@ -8,7 +8,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') exit;
 
 // --- CONFIGURACIÓN MAESTRA ---
 $githubToken = "TU_TOKEN_GITHUB";
-$githubRepo  = "USUARIO/REPO"; 
+$githubRepo  = "jfornielestiburcio02-web/hostingimage"; 
 $proyectoID  = "hostingimage1";
 
 // 1. RECEPCIÓN
