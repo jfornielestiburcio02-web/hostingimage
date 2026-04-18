@@ -95,7 +95,7 @@
         <H2>Bienvenido</H2>
         <P CLASS="SUBTITLE">Introduce tus credenciales para entrar</P>
         
-        <FORM ACTION="procesar_login.php" METHOD="POST">
+        <FORM ACTION="procesar.php" METHOD="POST">
             <DIV CLASS="INPUT-GROUP">
                 <LABEL>USUARIO</LABEL>
                 <INPUT TYPE="TEXT" NAME="USUARIO" PLACEHOLDER="Ej: jmatamoros" REQUIRED>
