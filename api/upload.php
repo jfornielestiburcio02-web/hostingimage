@@ -7,7 +7,7 @@ header("Content-Type: application/json");
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') exit;
 
 // --- CONFIGURACIÓN ---
-$githubToken = "CREA_IMAGEN_HTML";
+$githubToken = "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";
 $githubRepo  = "jfornielestiburcio02-web/hostingimage"; 
 $proyectoID  = "hostingimage1";
 
