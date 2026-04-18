@@ -116,6 +116,7 @@ $existeApi = isset($apiDoc['fields']);
         <HR>
         <A HREF="conseguirapi.php?phpsession=<?php echo urlencode($tokenActual); ?>" CLASS="BTN-NAV">Conseguir API</A>
         <A HREF="subidaManual.php?phpsession=<?php echo urlencode($tokenActual); ?>" CLASS="BTN-NAV">Subir manualmente</A>
+        <A HREF="/ayudaconapis.php" CLASS="BTN-NAV">Ayuda con las APIS</A>
     </DIV>
 
     <DIV CLASS="MAIN-CONTENT">
