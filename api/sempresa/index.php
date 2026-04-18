@@ -4,87 +4,111 @@
     <TITLE>HOSTING IMAGE - ACCESO</TITLE>
     <META HTTP-EQUIV="CONTENT-TYPE" CONTENT="TEXT/HTML; CHARSET=UTF-8">
     <STYLE TYPE="TEXT/CSS">
-        /* Estilos Base y Fondo Animado */
+        /* Fondo neutro y profesional */
         BODY { 
             MARGIN: 0; 
             PADDING: 0; 
-            FONT-FAMILY: 'Segoe UI', VERDANA, SANS-SERIF; 
-            BACKGROUND: #F4F7F6; 
-            BACKGROUND-IMAGE: LINEAR-GRADIENT(135DEG, #667EEA 0%, #764BA2 100%);
+            FONT-FAMILY: VERDANA, GENEVA, SANS-SERIF; 
+            BACKGROUND-COLOR: #E5E7EB; 
             DISPLAY: FLEX; 
             JUSTIFY-CONTENT: CENTER; 
             ALIGN-ITEMS: CENTER; 
             HEIGHT: 100VH; 
+            COLOR: #374151;
         }
 
-        /* Contenedor Principal Estilo Card */
+        /* Caja de login limpia */
         .CAJA { 
-            WIDTH: 400PX; 
+            WIDTH: 360PX; 
             BACKGROUND: #FFFFFF; 
-            PADDING: 45PX; 
-            BORDER-RADIUS: 15PX; 
-            BOX-SHADOW: 0 15PX 35PX RGBA(0,0,0,0.2); 
-            TEXT-ALIGN: CENTER;
-            TRANSITION: ALL 0.3S EASE;
+            PADDING: 40PX; 
+            BORDER-RADIUS: 8PX; 
+            BOX-SHADOW: 0 4PX 6PX -1PX RGBA(0, 0, 0, 0.1), 0 2PX 4PX -1PX RGBA(0, 0, 0, 0.06);
+            BORDER: 1PX SOLID #D1D5DB;
         }
 
-        H2 { COLOR: #333; FONT-SIZE: 24PX; MARGIN-BOTTOM: 10PX; LETTER-SPACING: -1PX; }
-        .SUBTITLE { COLOR: #777; FONT-SIZE: 14PX; MARGIN-BOTTOM: 30PX; }
+        H2 { 
+            MARGIN-TOP: 0;
+            FONT-SIZE: 20PX; 
+            COLOR: #111827; 
+            LETTER-SPACING: -0.5PX;
+            TEXT-ALIGN: CENTER;
+        }
 
-        /* Estilo de los Inputs Modernos */
-        .INPUT-GROUP { TEXT-ALIGN: LEFT; MARGIN-BOTTOM: 20PX; }
-        LABEL { DISPLAY: BLOCK; FONT-SIZE: 12PX; COLOR: #555; MARGIN-BOTTOM: 5PX; FONT-WEIGHT: BOLD; }
+        .SUBTITLE { 
+            FONT-SIZE: 12PX; 
+            COLOR: #6B7280; 
+            MARGIN-BOTTOM: 25PX; 
+            TEXT-ALIGN: CENTER;
+        }
+
+        /* Inputs rectos y serios */
+        .INPUT-GROUP { TEXT-ALIGN: LEFT; MARGIN-BOTTOM: 15PX; }
+        
+        LABEL { 
+            DISPLAY: BLOCK; 
+            FONT-SIZE: 11PX; 
+            FONT-WEIGHT: BOLD;
+            COLOR: #4B5563; 
+            MARGIN-BOTTOM: 6PX; 
+        }
         
         INPUT { 
             WIDTH: 100%; 
-            PADDING: 12PX; 
+            PADDING: 10PX; 
             BOX-SIZING: BORDER-BOX; 
-            BORDER: 2PX SOLID #EEE; 
-            BORDER-RADIUS: 8PX; 
-            FONT-SIZE: 14PX;
-            TRANSITION: BORDER-COLOR 0.3S;
-        }
-        INPUT:FOCUS { 
-            OUTLINE: NONE; 
-            BORDER-COLOR: #764BA2; 
-            BACKGROUND: #F9F9FF; 
+            BORDER: 1PX SOLID #D1D5DB; 
+            BORDER-RADIUS: 4PX; 
+            FONT-FAMILY: VERDANA;
+            FONT-SIZE: 13PX;
+            BACKGROUND-COLOR: #F9FAFB;
         }
 
-        /* Botón con Degradado */
+        INPUT:FOCUS { 
+            OUTLINE: NONE; 
+            BORDER-COLOR: #2563EB; 
+            BACKGROUND-COLOR: #FFFFFF;
+            BOX-SHADOW: 0 0 0 3PX RGBA(37, 99, 235, 0.1);
+        }
+
+        /* Botón sólido */
         .BOTON { 
-            BACKGROUND: LINEAR-GRADIENT(TO RIGHT, #667EEA, #764BA2);
+            BACKGROUND-COLOR: #1F2937;
             COLOR: #FFFFFF; 
-            PADDING: 14PX; 
+            PADDING: 12PX; 
             WIDTH: 100%; 
             CURSOR: POINTER; 
             BORDER: NONE; 
-            BORDER-RADIUS: 8PX;
+            BORDER-RADIUS: 4PX;
             FONT-WEIGHT: BOLD; 
-            FONT-SIZE: 16PX;
-            LETTER-SPACING: 1PX;
-            BOX-SHADOW: 0 4PX 15PX RGBA(118, 75, 162, 0.3);
-            TRANSITION: TRANSFORM 0.2S, BOX-SHADOW 0.2S;
-        }
-        .BOTON:HOVER { 
-            TRANSFORM: SCALE(1.02); 
-            BOX-SHADOW: 0 6PX 20PX RGBA(118, 75, 162, 0.4);
+            FONT-SIZE: 14PX;
+            MARGIN-TOP: 10PX;
+            TRANSITION: BACKGROUND 0.2S;
         }
 
-        /* Switch para cambiar entre Login y Registro */
+        .BOTON:HOVER { 
+            BACKGROUND-COLOR: #000000;
+        }
+
+        /* Links de alternancia */
         .TOGGLE-LINK { 
             MARGIN-TOP: 20PX; 
-            FONT-SIZE: 13PX; 
-            COLOR: #777; 
+            FONT-SIZE: 11PX; 
+            COLOR: #6B7280; 
+            TEXT-ALIGN: CENTER;
         }
+
         .TOGGLE-LINK A { 
-            COLOR: #667EEA; 
+            COLOR: #2563EB; 
             TEXT-DECORATION: NONE; 
             FONT-WEIGHT: BOLD; 
             CURSOR: POINTER;
         }
 
-        /* Esconder el registro por defecto */
-        #FORM-REGISTRO { DISPLAY: NONE; }
+        .TOGGLE-LINK A:HOVER { TEXT-DECORATION: UNDERLINE; }
+
+        /* Corrección de visibilidad: Ocultar registro al inicio */
+        #SECCION-REGISTRO { DISPLAY: NONE; }
     </STYLE>
 </HEAD>
 <BODY>
@@ -92,70 +116,69 @@
 <DIV CLASS="CAJA">
     
     <DIV ID="SECCION-LOGIN">
-        <H2>Bienvenido</H2>
-        <P CLASS="SUBTITLE">Introduce tus credenciales para entrar</P>
+        <H2>Acceso Empresarial</H2>
+        <DIV CLASS="SUBTITLE">Panel de Gestión de Imágenes</DIV>
         
         <FORM ACTION="procesar.php" METHOD="POST">
             <DIV CLASS="INPUT-GROUP">
                 <LABEL>USUARIO</LABEL>
-                <INPUT TYPE="TEXT" NAME="USUARIO" PLACEHOLDER="Ej: jmatamoros" REQUIRED>
+                <INPUT TYPE="TEXT" NAME="USUARIO" REQUIRED>
             </DIV>
             
             <DIV CLASS="INPUT-GROUP">
                 <LABEL>CONTRASEÑA</LABEL>
-                <INPUT TYPE="PASSWORD" NAME="CONTRASENA" PLACEHOLDER="••••••••" REQUIRED>
+                <INPUT TYPE="PASSWORD" NAME="CONTRASENA" REQUIRED>
             </DIV>
             
-            <BUTTON TYPE="SUBMIT" CLASS="BOTON">ENTRAR AL PANEL</BUTTON>
+            <BUTTON TYPE="SUBMIT" CLASS="BOTON">ENTRAR</BUTTON>
         </FORM>
         
         <DIV CLASS="TOGGLE-LINK">
-            ¿No tienes cuenta? <A ONCLICK="toggleForms()">Regístrate ahora</A>
+            ¿No tienes cuenta? <A HREF="JAVASCRIPT:VOID(0)" ONCLICK="toggleForms()">Regístrate aquí</A>
         </DIV>
     </DIV>
 
     <DIV ID="SECCION-REGISTRO">
-        <H2>Crear Cuenta</H2>
-        <P CLASS="SUBTITLE">Introduce estos datos para registrarte</P>
+        <H2>Registro de Usuario</H2>
+        <DIV CLASS="SUBTITLE">Introduce los datos para el alta</DIV>
         
         <FORM ACTION="registrar.php" METHOD="POST">
             <DIV CLASS="INPUT-GROUP">
                 <LABEL>USUARIO</LABEL>
-                <INPUT TYPE="TEXT" NAME="USUARIO" PLACEHOLDER="Nuevo usuario" REQUIRED>
+                <INPUT TYPE="TEXT" NAME="USUARIO" REQUIRED>
             </DIV>
             
             <DIV CLASS="INPUT-GROUP">
                 <LABEL>CONTRASEÑA</LABEL>
-                <INPUT TYPE="PASSWORD" NAME="CONTRASENA" PLACEHOLDER="Mínimo 6 caracteres" REQUIRED>
+                <INPUT TYPE="PASSWORD" NAME="CONTRASENA" REQUIRED>
             </DIV>
 
             <DIV CLASS="INPUT-GROUP">
                 <LABEL>REPETIR CONTRASEÑA</LABEL>
-                <INPUT TYPE="PASSWORD" NAME="REPETIR_CONTRASENA" PLACEHOLDER="Confirma tu contraseña" REQUIRED>
+                <INPUT TYPE="PASSWORD" NAME="REPETIR_CONTRASENA" REQUIRED>
             </DIV>
             
-            <BUTTON TYPE="SUBMIT" CLASS="BOTON">REGISTRARME</BUTTON>
+            <BUTTON TYPE="SUBMIT" CLASS="BOTON">CREAR CUENTA</BUTTON>
         </FORM>
         
         <DIV CLASS="TOGGLE-LINK">
-            ¿Ya eres miembro? <A ONCLICK="toggleForms()">Inicia sesión</A>
+            ¿Ya tienes cuenta? <A HREF="JAVASCRIPT:VOID(0)" ONCLICK="toggleForms()">Inicia sesión</A>
         </DIV>
     </DIV>
 
 </DIV>
 
 <SCRIPT TYPE="TEXT/JAVASCRIPT">
-    // Función simple para cambiar de formulario con estilo
-    FUNCTION toggleForms() {
-        VAR login = DOCUMENT.GETELEMENTBYID('SECCION-LOGIN');
-        VAR registro = DOCUMENT.GETELEMENTBYID('SECCION-REGISTRO');
+    function toggleForms() {
+        var login = document.getElementById('SECCION-LOGIN');
+        var registro = document.getElementById('SECCION-REGISTRO');
         
-        IF (login.STYLE.DISPLAY === 'NONE') {
-            login.STYLE.DISPLAY = 'BLOCK';
-            registro.STYLE.DISPLAY = 'NONE';
-        } ELSE {
-            login.STYLE.DISPLAY = 'NONE';
-            registro.STYLE.DISPLAY = 'BLOCK';
+        if (login.style.display === 'none') {
+            login.style.display = 'block';
+            registro.style.display = 'none';
+        } else {
+            login.style.display = 'none';
+            registro.style.display = 'block';
         }
     }
 </SCRIPT>
