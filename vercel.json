@@ -47,7 +47,7 @@
     },
     {
       "src": ".env",
-      "dest": "/noPermitido.html"
+      "dest": "/api/noPermitido.php"
     },
     {
       "src": "/imagenes/(.*)",
