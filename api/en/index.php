@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['archivo'])) {
         $protocolo = isset($_SERVER['HTTPS']) ? 'https://' : 'http://';
         $dominio = $_SERVER['HTTP_HOST'];
         $urlImagen = $protocolo . $dominio . "/imagenes/" . $rutaInterna;
-        $mensaje = "¡Imagen lista en tu hosting!";
+        $mensaje = "¡Ready Image!";
     } else {
         $error = json_decode($response, true);
         $mensaje = "Error " . $httpCode . ": " . ($error['message'] ?? 'Fallo de red');
@@ -73,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['archivo'])) {
     <div>
  <a href="/es/"><img src="https://flagcdn.com/es.svg" width="50" /></a>
         </div>
-        <a href="/sempresa/" class="btn-empresa">Solución para empresas</a>
+        <a href="/en/sempresa/" class="btn-empresa">Solution for companiess</a>
     </div>
 <div id="main">
 <h1>Upload your file</h1>
@@ -108,7 +108,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['archivo'])) {
             var copyText = document.getElementById("copyInput");
             copyText.select();
             document.execCommand("copy");
-            alert("Enlace copiado: " + copyText.value);
+            alert("URL Copy: " + copyText.value);
         }
     </script>
 
