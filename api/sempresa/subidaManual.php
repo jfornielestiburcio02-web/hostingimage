@@ -4,7 +4,7 @@ session_start();
 // --- CONFIGURACIÓN FIRESTORE ---
 $proyectoID = "hostingimage1";
 
-// 1. ANCLAR EL PHPSESSION DE LA URL A LA SESIÓN DE PHP
+// 1. GESTIÓN DE SESIÓN (Tal cual pediste)
 if (isset($_GET['phpsession'])) {
     $_SESSION['PHPSESS_MOTOR'] = $_GET['phpsession'];
     $PARAMS = $_GET;
@@ -21,7 +21,7 @@ if (!isset($_SESSION['PHPSESS_MOTOR'])) {
 
 $tokenActual = $_SESSION['PHPSESS_MOTOR'];
 
-// 2. VALIDACIÓN DEL USUARIO Y OBTENCIÓN DE ID
+// 2. VALIDACIÓN DEL USUARIO Y OBTENCIÓN DE DATOS
 $urlFirestore = "https://firestore.googleapis.com/v1/projects/{$proyectoID}/databases/(default)/documents:runQuery";
 $query = [
     'structuredQuery' => [
@@ -52,20 +52,21 @@ if (empty($resData) || !isset($resData[0]['document'])) {
     exit("ACCESO DENEGADO");
 }
 
+// Sacamos el ID del documento de usuario (ej: e816...)
 $docPath = $resData[0]['document']['name'];
 $pathPartes = explode('/', $docPath);
 $usuarioID = end($pathPartes);
 
-// 3. OBTENER DATOS DE LA API (Para el upload manual)
+// 3. OBTENER API KEY Y NOMBRE DE EMPRESA DESDE LA COLECCIÓN 'apis'
 $urlApi = "https://firestore.googleapis.com/v1/projects/{$proyectoID}/databases/(default)/documents/apis/" . urlencode($usuarioID);
 $ch = curl_init($urlApi);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-$apiData = json_decode(curl_exec($ch), true);
+$apiDoc = json_decode(curl_exec($ch), true);
 curl_close($ch);
 
-$apiKey = $apiData['fields']['api']['stringValue'] ?? '';
-$nombreEmpresa = $apiData['fields']['nombreEmpresa']['stringValue'] ?? 'default';
+$apiKey = $apiDoc['fields']['api']['stringValue'] ?? '';
+$nombreEmpresa = $apiDoc['fields']['nombreEmpresa']['stringValue'] ?? 'empresa';
 
 // 4. LÓGICA DE ELIMINACIÓN
 if (isset($_GET['eliminar'])) {
@@ -83,131 +84,114 @@ if (isset($_GET['eliminar'])) {
     exit();
 }
 
-// 5. OBTENER LISTADO DE IMÁGENES
-$urlLista = "https://firestore.googleapis.com/v1/projects/{$proyectoID}/databases/(default)/documents/imagenes/" . urlencode($usuarioID) . "/lista?orderBy=fecha desc";
+// 5. LISTAR IMÁGENES GUARDADAS
+$urlLista = "https://firestore.googleapis.com/v1/projects/{$proyectoID}/databases/(default)/documents/imagenes/" . urlencode($usuarioID) . "/lista";
 $ch = curl_init($urlLista);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 $resLista = json_decode(curl_exec($ch), true);
 curl_close($ch);
 $imagenes = $resLista['documents'] ?? [];
-
 ?>
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 TRANSITIONAL//EN" "http://www.w3.org/TR/html4/loose.dtd">
+
+<!DOCTYPE HTML>
 <HTML>
 <HEAD>
-    <TITLE>SUBIDA MANUAL - HOSTING IMAGE</TITLE>
-    <META HTTP-EQUIV="CONTENT-TYPE" CONTENT="TEXT/HTML; CHARSET=UTF-8">
-    <STYLE TYPE="TEXT/CSS">
-        BODY { MARGIN: 0; PADDING: 0; FONT-FAMILY: VERDANA; BACKGROUND-COLOR: #FFF; COLOR: #333; }
+    <TITLE>SUBIDA MANUAL</TITLE>
+    <STYLE>
+        BODY { MARGIN: 0; FONT-FAMILY: VERDANA; BACKGROUND: #FFF; }
         .MASTER-CONTAINER { DISPLAY: FLEX; MIN-HEIGHT: 100VH; }
-        .SIDEBAR { WIDTH: 280PX; BACKGROUND-COLOR: #F8F8F8; BORDER-RIGHT: 2PX SOLID #333; PADDING: 30PX 20PX; BOX-SIZING: BORDER-BOX; }
-        .MAIN-CONTENT { FLEX-GROW: 1; PADDING: 50PX; BOX-SIZING: BORDER-BOX; }
-        .BTN { DISPLAY: BLOCK; MARGIN-BOTTOM: 15PX; PADDING: 15PX; BACKGROUND-COLOR: #333; COLOR: #FFF; TEXT-DECORATION: NONE; FONT-WEIGHT: BOLD; TEXT-ALIGN: CENTER; BORDER-RADIUS: 4PX; FONT-SIZE: 13PX; }
-        .BTN:HOVER { BACKGROUND-COLOR: #000; }
+        .SIDEBAR { WIDTH: 280PX; BACKGROUND: #F8F8F8; BORDER-RIGHT: 2PX SOLID #333; PADDING: 30PX 20PX; }
+        .MAIN-CONTENT { FLEX-GROW: 1; PADDING: 40PX; }
+        .BTN { DISPLAY: BLOCK; MARGIN-BOTTOM: 10PX; PADDING: 12PX; BACKGROUND: #333; COLOR: #FFF; TEXT-DECORATION: NONE; TEXT-ALIGN: CENTER; BORDER-RADIUS: 4PX; FONT-SIZE: 12PX; }
         
-        .ZONA-SUBIDA { BACKGROUND: #F9F9F9; PADDING: 20PX; BORDER: 2PX DASHED #CCC; TEXT-ALIGN: CENTER; MARGIN-BOTTOM: 40PX; }
-        .GRID-IMAGENES { DISPLAY: GRID; GRID-TEMPLATE-COLUMNS: REPEAT(AUTO-FILL, MINMAX(200PX, 1FR)); GRID-GAP: 20PX; }
-        .CARD-IMG { BORDER: 1PX SOLID #DDD; PADDING: 10PX; TEXT-ALIGN: CENTER; BACKGROUND: #FFF; }
-        .CARD-IMG IMG { WIDTH: 100%; HEIGHT: 150PX; OBJECT-FIT: COVER; MARGIN-BOTTOM: 10PX; }
-        .URL-TXT { FONT-SIZE: 10PX; WORD-BREAK: BREAK-ALL; COLOR: #666; BACKGROUND: #EEE; PADDING: 5PX; DISPLAY: BLOCK; MARGIN-BOTTOM: 10PX; }
-        .BTN-DEL { COLOR: RED; TEXT-DECORATION: NONE; FONT-SIZE: 11PX; FONT-WEIGHT: BOLD; }
-        
-        H3 { MARGIN-TOP: 0; FONT-SIZE: 16PX; COLOR: #666; TEXT-TRANSFORM: UPPERCASE; }
-        HR { BORDER: 0; BORDER-TOP: 1PX SOLID #DDD; MARGIN: 20PX 0; }
+        .UPLOAD-BOX { BORDER: 2PX DASHED #DDD; PADDING: 30PX; TEXT-ALIGN: CENTER; MARGIN-BOTTOM: 30PX; BACKGROUND: #FAFAFA; }
+        .GRID { DISPLAY: GRID; GRID-TEMPLATE-COLUMNS: REPEAT(AUTO-FILL, MINMAX(180PX, 1FR)); GAP: 20PX; }
+        .ITEM { BORDER: 1PX SOLID #EEE; PADDING: 10PX; BACKGROUND: #FFF; BOX-SHADOW: 0 2PX 5PX RGBA(0,0,0,0.05); POSITION: RELATIVE; }
+        .ITEM IMG { WIDTH: 100%; HEIGHT: 120PX; OBJECT-FIT: COVER; BORDER-RADIUS: 3PX; }
+        .URL-LABEL { FONT-SIZE: 10PX; BACKGROUND: #F0F0F0; PADDING: 5PX; DISPLAY: BLOCK; MARGIN: 10PX 0; WORD-BREAK: BREAK-ALL; CURSOR: POINTER; }
+        .DELETE-LINK { COLOR: #CC0000; TEXT-DECORATION: NONE; FONT-SIZE: 10PX; FONT-WEIGHT: BOLD; }
+        H3 { COLOR: #666; FONT-SIZE: 14PX; TEXT-TRANSFORM: UPPERCASE; }
     </STYLE>
 </HEAD>
 <BODY>
 
 <DIV CLASS="MASTER-CONTAINER">
     <DIV CLASS="SIDEBAR">
-        <H3>Menú de Gestión</H3>
+        <H3>Menú</H3>
+        <A HREF="conseguirapi.php?phpsession=<?php echo urlencode($tokenActual); ?>" CLASS="BTN">CONSEGUIR API</A>
+        <A HREF="subidaManual.php?phpsession=<?php echo urlencode($tokenActual); ?>" CLASS="BTN">SUBIDA MANUAL</A>
         <HR>
-        <A HREF="conseguirapi.php?phpsession=<?php echo urlencode($tokenActual); ?>" CLASS="BTN">Conseguir API</A>
-        <A HREF="subidaManual.php?phpsession=<?php echo urlencode($tokenActual); ?>" CLASS="BTN">Subir manualmente</A>
-        <HR>
-        <A HREF="logout.php" STYLE="COLOR: #999; TEXT-DECORATION: NONE; FONT-SIZE: 11PX;">Cerrar Sesión Segura</A>
+        <A HREF="logout.php" STYLE="FONT-SIZE: 11PX; COLOR: #999;">Cerrar Sesión</A>
     </DIV>
 
     <DIV CLASS="MAIN-CONTENT">
-        <H1>Gestión de Imágenes</H1>
+        <H1>Subir Imagen</H1>
+        
+        <DIV CLASS="UPLOAD-BOX">
+            <FORM ID="frmSubir">
+                <INPUT TYPE="FILE" ID="archivo" ACCEPT="image/*" REQUIRED>
+                <BUTTON TYPE="SUBMIT" CLASS="BTN" STYLE="DISPLAY: INLINE; MARGIN-LEFT: 10PX;">SUBIR AHORA</BUTTON>
+            </FORM>
+            <DIV ID="status" STYLE="MARGIN-TOP: 10PX; FONT-SIZE: 12PX; COLOR: #666;"></DIV>
+        </DIV>
 
-        <?php if(empty($apiKey)): ?>
-            <DIV STYLE="COLOR: RED; FONT-WEIGHT: BOLD; PADDING: 20PX; BORDER: 1PX SOLID RED;">
-                Debes generar una API Key primero en el menú "Conseguir API".
-            </DIV>
-        <?php else: ?>
-            
-            <DIV CLASS="ZONA-SUBIDA">
-                <H2 STYLE="FONT-SIZE: 16PX;">Subir Nueva Imagen</H2>
-                <FORM ID="uploadForm">
-                    <INPUT TYPE="FILE" NAME="image" ID="fileInput" ACCEPT="image/*" REQUIRED>
-                    <BUTTON TYPE="SUBMIT" CLASS="BTN" STYLE="DISPLAY: INLINE-BLOCK; MARGIN: 0; MARGIN-LEFT: 10PX;">SUBIR AHORA</BUTTON>
-                </FORM>
-                <DIV ID="uploadStatus" STYLE="MARGIN-TOP: 10PX; FONT-SIZE: 12PX;"></DIV>
-            </DIV>
-
-            <H2 STYLE="FONT-SIZE: 18PX; BORDER-BOTTOM: 2PX SOLID #333; PADDING-BOTTOM: 10PX;">Mis Imágenes Guardadas</H2>
-            
-            <DIV CLASS="GRID-IMAGENES">
-                <?php if(empty($imagenes)): ?>
-                    <P>No hay imágenes subidas todavía.</P>
-                <?php else: ?>
-                    <?php foreach($imagenes as $img): 
-                        $url = $img['fields']['url']['stringValue'] ?? '';
-                        $nombre = $img['fields']['nombre']['stringValue'] ?? 'Sin nombre';
-                        $pathFull = $img['name'];
-                        $idDoc = end(explode('/', $pathFull));
-                    ?>
-                        <DIV CLASS="CARD-IMG">
-                            <IMG SRC="<?php echo htmlspecialchars($url); ?>" ALT="Vista previa">
-                            <STRONG STYLE="FONT-SIZE: 11PX;"><?php echo htmlspecialchars($nombre); ?></STRONG>
-                            <CODE CLASS="URL-TXT"><?php echo htmlspecialchars($url); ?></CODE>
-                            <A HREF="?eliminar=<?php echo $idDoc; ?>" CLASS="BTN-DEL" ONCLICK="return confirm('¿Eliminar esta imagen?')">ELIMINAR</A>
-                        </DIV>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-            </DIV>
-
-        <?php endif; ?>
+        <H3>Mis Imágenes en la Nube</H3>
+        <DIV CLASS="GRID">
+            <?php IF(EMPTY($imagenes)): ?>
+                <P>No hay imágenes.</P>
+            <?php ELSE: ?>
+                <?php FOREACH($imagenes AS $img): 
+                    $url = $img['fields']['url']['stringValue'];
+                    $nombre = $img['fields']['nombre']['stringValue'];
+                    $partes = EXPLODE('/', $img['name']);
+                    $idDoc = END($partes);
+                ?>
+                <DIV CLASS="ITEM">
+                    <IMG SRC="<?php ECHO $url; ?>">
+                    <SPAN CLASS="URL-LABEL" ONCLICK="navigator.clipboard.writeText('<?php ECHO $url; ?>'); alert('URL Copiada');">
+                        <?php ECHO $url; ?>
+                    </SPAN>
+                    <A HREF="?eliminar=<?php ECHO $idDoc; ?>" CLASS="DELETE-LINK" ONCLICK="RETURN CONFIRM('¿Borrar registro?')">ELIMINAR</A>
+                </DIV>
+                <?php ENDFOREACH; ?>
+            <?php ENDIF; ?>
+        </DIV>
     </DIV>
 </DIV>
 
 <SCRIPT>
-document.getElementById('uploadForm')?.addEventListener('submit', async (e) => {
+document.getElementById('frmSubir').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const status = document.getElementById('uploadStatus');
-    const file = document.getElementById('fileInput').files[0];
-    
-    if(!file) return;
+    const btn = e.target.querySelector('button');
+    const status = document.getElementById('status');
+    const file = document.getElementById('archivo').files[0];
 
-    status.innerText = "Procesando subida...";
-    status.style.color = "blue";
+    btn.disabled = true;
+    status.innerText = "Subiendo...";
 
-    const formData = new FormData();
-    formData.append('image', file);
-    formData.append('apiKey', '<?php echo $apiKey; ?>');
-    formData.append('usuarioID', '<?php echo $usuarioID; ?>');
-    formData.append('path', '/imagenes/<?php echo $nombreEmpresa; ?>/');
+    const fd = new FormData();
+    fd.append('image', file);
+    fd.append('apiKey', '<?php echo $apiKey; ?>');
+    fd.append('usuarioID', '<?php echo $usuarioID; ?>');
+    fd.append('path', '/imagenes/<?php echo $nombreEmpresa; ?>/');
 
     try {
-        const response = await fetch('https://hostingimage-bice.vercel.app/upload.php', {
+        const resp = await fetch('https://hostingimage-bice.vercel.app/upload.php', {
             method: 'POST',
-            body: formData
+            body: fd
         });
-        const res = await response.json();
+        const data = await resp.json();
 
-        if(res.success) {
-            status.innerText = "¡Subido con éxito! Recargando...";
-            status.style.color = "green";
-            setTimeout(() => location.reload(), 1500);
+        if (data.success) {
+            location.reload();
         } else {
-            status.innerText = "Error: " + res.error;
-            status.style.color = "red";
+            status.innerText = "Error: " + data.error;
+            btn.disabled = false;
         }
-    } catch(err) {
-        status.innerText = "Error de conexión.";
-        status.style.color = "red";
+    } catch (err) {
+        status.innerText = "Error de conexión";
+        btn.disabled = false;
     }
 });
 </SCRIPT>
