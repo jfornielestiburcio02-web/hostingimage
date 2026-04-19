@@ -26,32 +26,35 @@
       "dest": "/api/es/index.php"
     },
     {
-      "src": "/sempresa/index.php",
-      "status": 404
-    },
-    {
-      "src": "/en/index.php",
-      "status": 404
-    },
-    {
       "src": "/en/",
       "dest": "/api/en/index.php"
+    },
+    {
+      "src": "/imagenes/(.*)",
+      "dest": "https://raw.githubusercontent.com/jfornielestiburcio02-web/hostingimage/main/imagenes/$1"
     },
     {
       "src": "/(.*)\\.php",
       "dest": "/api/$1.php"
     },
     {
-      "src": "/(.*)\\.xlx",
-      "status": 404
-    },
-    {
       "src": ".env",
       "dest": "/api/noPermitido.php"
     },
     {
-      "src": "/imagenes/(.*)",
-      "dest": "https://raw.githubusercontent.com/jfornielestiburcio02-web/hostingimage/main/imagenes/$1"
+      "src": "/(.*)\\.xlx",
+      "status": 404
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Credentials", "value": "true" },
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET,OPTIONS,PATCH,DELETE,POST,PUT" },
+        { "key": "Access-Control-Allow-Headers", "value": "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version" }
+      ]
     }
   ]
 }
