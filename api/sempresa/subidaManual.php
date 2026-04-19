@@ -177,7 +177,7 @@ document.getElementById('frmSubir').addEventListener('submit', async (e) => {
     fd.append('path', '/imagenes/<?php echo $nombreEmpresa; ?>/');
 
     try {
-        const resp = await fetch('https://hostingimage-bice.vercel.app/upload.php', {
+        const resp = await fetch('https://imagehostinger.vercel.app/upload.php', {
             method: 'POST',
             body: fd
         });
