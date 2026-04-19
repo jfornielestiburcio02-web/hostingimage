@@ -38,7 +38,7 @@
       "dest": "/api/$1.php"
     },
     {
-      "src": ".env",
+      "src": "/.env",
       "dest": "/api/noPermitido.php"
     },
     {
